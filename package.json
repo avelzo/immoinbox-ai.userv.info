@@ -1,0 +1,33 @@
+{
+  "name": "immoinbox-ai.userv.info",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "tsx prisma/seed.ts",
+    "seed:realistic": "tsx prisma/seed-realistic.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "next": "16.2.6",
+    "openai": "^6.37.0",
+    "prisma": "^6.19.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^25",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^10",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^6"
+  }
+}

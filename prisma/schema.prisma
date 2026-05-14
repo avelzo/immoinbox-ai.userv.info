@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum EmailCategory {
+  INCIDENT
+  DEMANDE_LOCATAIRE
+  CANDIDATURE
+  QUITTANCE
+  FACTURE
+  URGENT
+  ADMINISTRATIF
+  SPAM
+}
+
+enum EmailStatus {
+  NEW
+  PROCESSED
+  ARCHIVED
+  ERROR
+}
+
+model Organization {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mailboxes Mailbox[]
+  emails    Email[]
+}
+
+model Mailbox {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String   @db.ObjectId
+  email          String
+  provider       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  emails       Email[]
+}
+
+model Email {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId String        @db.ObjectId
+  mailboxId      String?       @db.ObjectId
+
+  externalMessageId String?
+  from              String
+  to                String[]
+  subject           String
+  textContent       String
+
+  category          EmailCategory?
+  urgency           Int?
+  summary           String?
+  recommendedAction String?
+  suggestedReply    String?
+
+  status     EmailStatus @default(NEW)
+  receivedAt DateTime    @default(now())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  mailbox      Mailbox?     @relation(fields: [mailboxId], references: [id])
+}
