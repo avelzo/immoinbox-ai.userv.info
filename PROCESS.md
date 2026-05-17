@@ -87,3 +87,23 @@ Ensuite, quand la vidéo est prête :
 - Premiers retours
 
 C'est là que le projet commence à devenir potentiellement rentable.
+
+
+
+
+
+## Docker update prisma  
+
+```bash
+docker exec -it immoinbox-app sh
+
+npx prisma db push
+npx prisma generate
+
+
+npm run seed:realistic
+
+
+
+docker compose restart app
+```

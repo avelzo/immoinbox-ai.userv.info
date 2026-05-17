@@ -3,6 +3,16 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { EmailStatusButton } from "@/components/EmailStatusButton";
+import { CreateInterventionButton } from "@/components/CreateInterventionButton";
+import { DEMO_ORGANIZATION_ID } from "@/lib/demo-config";
+import {
+  getCategoryLabel,
+  getCategoryClass,
+  getUrgencyLabel,
+  getUrgencyClass,
+  getStatusLabel,
+  getStatusClass,
+} from "@/lib/email-ui";
 
 type PageProps = {
   params: Promise<{
@@ -10,68 +20,14 @@ type PageProps = {
   }>;
 };
 
-function getCategoryLabel(category?: string | null) {
-  const labels: Record<string, string> = {
-    INCIDENT: "Incident",
-    DEMANDE_LOCATAIRE: "Demande locataire",
-    CANDIDATURE: "Candidature",
-    QUITTANCE: "Quittance",
-    FACTURE: "Facture",
-    URGENT: "Urgent",
-    ADMINISTRATIF: "Administratif",
-    SPAM: "Spam",
-  };
-
-  return category ? labels[category] ?? category : "Non classé";
-}
-
-function getCategoryClass(category?: string | null) {
-  const classes: Record<string, string> = {
-    INCIDENT: "bg-red-100 text-red-700",
-    DEMANDE_LOCATAIRE: "bg-blue-100 text-blue-700",
-    CANDIDATURE: "bg-violet-100 text-violet-700",
-    QUITTANCE: "bg-emerald-100 text-emerald-700",
-    FACTURE: "bg-amber-100 text-amber-700",
-    URGENT: "bg-orange-100 text-orange-700",
-    ADMINISTRATIF: "bg-slate-100 text-slate-700",
-    SPAM: "bg-zinc-200 text-zinc-700",
-  };
-
-  return classes[category ?? ""] ?? "bg-slate-100 text-slate-700";
-}
-
-function getUrgencyLabel(urgency?: number | null) {
-  if (!urgency) return "Non défini";
-  if (urgency >= 5) return "Très urgent";
-  if (urgency === 4) return "Urgent";
-  if (urgency === 3) return "Moyen";
-  if (urgency === 2) return "Faible";
-  return "Très faible";
-}
-
-function getUrgencyClass(urgency?: number | null) {
-  if (!urgency) return "bg-slate-100 text-slate-700";
-  if (urgency >= 5) return "bg-red-100 text-red-700";
-  if (urgency === 4) return "bg-orange-100 text-orange-700";
-  if (urgency === 3) return "bg-amber-100 text-amber-700";
-  return "bg-slate-100 text-slate-700";
-}
-
-function getStatusLabel(status: string) {
-  return status === "PROCESSED" ? "Traité" : "Non traité";
-}
-
-function getStatusClass(status: string) {
-  return status === "PROCESSED"
-    ? "bg-emerald-100 text-emerald-700"
-    : "bg-slate-100 text-slate-700";
-}
-
 export default async function EmailDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const email = await prisma.email.findUnique({
-    where: { id },
+  const email = await prisma.email.findFirst({
+    where: { id, organizationId: DEMO_ORGANIZATION_ID },
+    include: {
+      interventions: true,
+    },
   });
 
   if (!email) {
@@ -136,7 +92,22 @@ export default async function EmailDetailPage({ params }: PageProps) {
               emailId={email.id}
               initialStatus={email.status}
             />
+            {email.category === "INCIDENT" && (
+              <>
+                {email.interventions.length > 0 ? (
+                  <Link
+                    href={`/dashboard/interventions/${email.interventions[0].id}`}
+                    className="rounded-xl bg-cyan-100 px-3 py-1 text-sm font-medium text-cyan-700 hover:bg-cyan-200"
+                  >
+                    Voir l’intervention liée
+                  </Link>
+                ) : (
+                  <CreateInterventionButton emailId={email.id} />
+                )}
+              </>
+            )}
           </div>
+          
         </div>
 
         <section className="rounded-2xl border border-orange-200 bg-orange-50 p-6 shadow-sm">
@@ -150,7 +121,7 @@ export default async function EmailDetailPage({ params }: PageProps) {
         </section>
 
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-3 text-xl font-semibold">
+          <h2 className="mb-3 text-xl font-semibold text-slate-700">
             Résumé IA
           </h2>
 
@@ -161,7 +132,7 @@ export default async function EmailDetailPage({ params }: PageProps) {
 
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
           <div className="mb-3 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-slate-700">
               Réponse suggérée
             </h2>
 
@@ -174,7 +145,7 @@ export default async function EmailDetailPage({ params }: PageProps) {
         </section>
 
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="mb-3 text-xl font-semibold">
+          <h2 className="mb-3 text-xl font-semibold text-slate-700">
             Email original
           </h2>
 

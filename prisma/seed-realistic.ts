@@ -2,13 +2,16 @@ import { PrismaClient, EmailCategory, EmailStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-const ORGANIZATION_ID = "6a02026cc7614ba0caf62450";
-const MAILBOX_ID = "6a02026cc7614ba0caf62451";
+import {
+  DEMO_ORGANIZATION_ID,
+  DEMO_MAILBOX_ID,
+  DEMO_EMAIL,
+} from "../lib/demo-config";
 
 async function main() {
   await prisma.email.deleteMany({
     where: {
-      organizationId: ORGANIZATION_ID,
+      organizationId: DEMO_ORGANIZATION_ID,
       externalMessageId: {
         startsWith: "demo-realistic-",
       },
@@ -201,11 +204,11 @@ async function main() {
   for (const email of emails) {
     await prisma.email.create({
       data: {
-        organizationId: ORGANIZATION_ID,
-        mailboxId: MAILBOX_ID,
+        organizationId: DEMO_ORGANIZATION_ID,
+        mailboxId: DEMO_MAILBOX_ID,
         externalMessageId: email.externalMessageId,
         from: email.from,
-        to: ["admin@userv.info"],
+        to: [DEMO_EMAIL],
         subject: email.subject,
         textContent: email.textContent,
         category: email.category,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { buildEmailAnalysisPrompt } from "@/lib/prompts/email-analysis";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -63,18 +64,14 @@ export async function POST(request: Request) {
       .replace(/\s+/g, " ")
       .trim()
       .slice(0, 6000);
+    const prompt = buildEmailAnalysisPrompt({
+      subject,
+      from,
+      content: cleanContent,
+    });
     const response = await client.responses.create({
       model: "gpt-4.1-mini",
-      input: `
-        Tu es un assistant spécialisé en gestion locative.
-
-        Analyse cet email immobilier.
-
-        Sujet: ${subject}
-        Expéditeur: ${from}
-        Contenu:
-        ${cleanContent}
-      `,
+      input: prompt,
       text: {
         format: {
           type: "json_schema",
@@ -87,6 +84,7 @@ export async function POST(request: Request) {
                 type: "string",
                 enum: [
                   "INCIDENT",
+                  "INTERVENTION",
                   "DEMANDE_LOCATAIRE",
                   "CANDIDATURE",
                   "QUITTANCE",
@@ -94,6 +92,18 @@ export async function POST(request: Request) {
                   "URGENT",
                   "ADMINISTRATIF",
                   "SPAM",
+                ],
+              },
+              senderRole: {
+                type: "string",
+                enum: [
+                  "TENANT",
+                  "TECHNICIAN",
+                  "OWNER",
+                  "SYNDIC",
+                  "CANDIDATE",
+                  "ADMINISTRATION",
+                  "UNKNOWN",
                 ],
               },
               urgency: {
@@ -117,6 +127,7 @@ export async function POST(request: Request) {
               "summary",
               "recommendedAction",
               "suggestedReply",
+              "senderRole",
             ],
           },
           strict: true,
@@ -142,15 +153,30 @@ export async function POST(request: Request) {
         summary: analysis.summary,
         recommendedAction: analysis.recommendedAction,
         suggestedReply: analysis.suggestedReply,
-
+        senderRole: analysis.senderRole,
         status: "NEW",
       },
     });
+    
+    let createdIntervention = null;
+    if (analysis.category === "INTERVENTION") {
+      createdIntervention = await prisma.intervention.create({
+        data: {
+          organizationId,
+          title: analysis.summary || subject,
+          description: analysis.recommendedAction,
+          status: "PENDING",
+          technicianName: analysis.senderRole === "TECHNICIAN" ? from : null,
+          incidentEmailId: savedEmail.id,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       duplicated: false,
       email: savedEmail,
+      intervention: createdIntervention,
     });
   } catch (error) {
     console.error("Analyze email error:", error);

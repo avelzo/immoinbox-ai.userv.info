@@ -9,6 +9,7 @@ datasource db {
 
 enum EmailCategory {
   INCIDENT
+  INTERVENTION
   DEMANDE_LOCATAIRE
   CANDIDATURE
   QUITTANCE
@@ -25,14 +26,45 @@ enum EmailStatus {
   ERROR
 }
 
-model Organization {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum SenderRole {
+  TENANT
+  TECHNICIAN
+  OWNER
+  SYNDIC
+  CANDIDATE
+  ADMINISTRATION
+  UNKNOWN
+}
 
-  mailboxes Mailbox[]
-  emails    Email[]
+enum InterventionStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model User {
+  id String @id @map("_id")
+  email           String        @unique
+  emailVerified   Boolean       @default(false)
+  name            String?
+  organizationId  String?       @db.ObjectId
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+}
+
+model Organization {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  users         User[]
+  mailboxes     Mailbox[]
+  emails        Email[]
+  interventions Intervention[]
 }
 
 model Mailbox {
@@ -43,32 +75,83 @@ model Mailbox {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  emails       Email[]
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  emails        Email[]
 }
 
 model Email {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  organizationId String        @db.ObjectId
-  mailboxId      String?       @db.ObjectId
-
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId    String          @db.ObjectId
+  mailboxId         String?         @db.ObjectId
   externalMessageId String?
   from              String
   to                String[]
   subject           String
   textContent       String
-
+  senderRole        SenderRole?
   category          EmailCategory?
   urgency           Int?
   summary           String?
   recommendedAction String?
   suggestedReply    String?
+  status            EmailStatus     @default(NEW)
+  receivedAt        DateTime        @default(now())
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  interventions     Intervention[]
+  organization      Organization    @relation(fields: [organizationId], references: [id])
+  mailbox           Mailbox?        @relation(fields: [mailboxId], references: [id])
+}
 
-  status     EmailStatus @default(NEW)
-  receivedAt DateTime    @default(now())
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+model Intervention {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  organizationId  String              @db.ObjectId
+  organization    Organization        @relation(fields: [organizationId], references: [id])
+  title           String
+  description     String?
+  status          InterventionStatus  @default(PENDING)
+  technicianName  String?
+  incidentEmailId String?             @db.ObjectId
+  incidentEmail   Email?              @relation(fields: [incidentEmailId], references: [id])
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+}
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  mailbox      Mailbox?     @relation(fields: [mailboxId], references: [id])
+model Session {
+  id        String   @id @map("_id")
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @map("_id")
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+model Verification {
+  id         String   @id @map("_id")
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
