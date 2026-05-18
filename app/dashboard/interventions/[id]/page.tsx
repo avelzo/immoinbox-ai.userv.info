@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { DEMO_ORGANIZATION_ID } from "@/lib/demo-config";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { redirect } from "next/navigation";
 import { InterventionStatusButton } from "@/components/InterventionStatusButton";
 import {
   getInterventionStatusLabel,
@@ -16,10 +17,14 @@ type PageProps = {
 
 export default async function InterventionDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const organizationId = await getCurrentUserOrganizationId();
+  if (!organizationId) {
+    redirect("/login");
+  }
   const intervention = await prisma.intervention.findFirst({
     where: {
         id,
-        organizationId: DEMO_ORGANIZATION_ID,
+        organizationId,
     },
     include: {
       incidentEmail: true,

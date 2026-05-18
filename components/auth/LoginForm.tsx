@@ -46,7 +46,7 @@ export function LoginForm() {
         Accès au dashboard ImmoInbox AI.
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 space-y-4 text-slate-800 placeholder:text-slate-400">
         <div>
           <label className="text-sm font-medium text-slate-700">
             Email

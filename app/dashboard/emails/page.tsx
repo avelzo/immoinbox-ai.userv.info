@@ -4,7 +4,8 @@ import { Prisma } from "@prisma/client";
 import { EmailStatusButton } from "@/components/EmailStatusButton";
 import { CreateInterventionButton } from "@/components/CreateInterventionButton";
 import { EMAIL_CATEGORIES } from "@/lib/email-categories";
-import { DEMO_ORGANIZATION_ID } from "@/lib/demo-config";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { redirect } from "next/navigation";
 import {
   getCategoryLabel,
   getCategoryClass,
@@ -26,7 +27,7 @@ type EmailsPageProps = {
 
 function buildUrl(params: Record<string, string | undefined>) {
   const searchParams = new URLSearchParams();
-
+  
   Object.entries(params).forEach(([key, value]) => {
     if (value) {
       searchParams.set(key, value);
@@ -89,11 +90,12 @@ function StatsCard({
   );
 }
 
-export default async function EmailsPage({
-  searchParams,
-}: EmailsPageProps) {
+export default async function EmailsPage({searchParams}: EmailsPageProps) {
+  const organizationId = await getCurrentUserOrganizationId();
+  if (!organizationId) {
+    redirect("/login");
+  }
   const params = await searchParams;
-
   const q = params.q ?? "";
   const status = params.status;
   const category = params.category;
@@ -101,7 +103,7 @@ export default async function EmailsPage({
   const sort = params.sort ?? "recent";
 
   const where: Prisma.EmailWhereInput = {
-    organizationId: DEMO_ORGANIZATION_ID,
+    organizationId,
     ...(status ? { status: status as any } : {}),
 
     ...(category
@@ -150,7 +152,7 @@ export default async function EmailsPage({
       : sort === "new"
       ? [{ status: "asc" as const }]
       : [{ receivedAt: "desc" as const }];
-  console.log({where, orderBy});
+  
   const [
     emails,
     totalCount,
@@ -169,20 +171,20 @@ export default async function EmailsPage({
 
     prisma.email.count({
       where: {
-        organizationId: DEMO_ORGANIZATION_ID,
+        organizationId,
       },
     }),
 
     prisma.email.count({
       where: {
-        organizationId: DEMO_ORGANIZATION_ID,
+        organizationId,
         status: "NEW",
       },
     }),
 
     prisma.email.count({
       where: {
-        organizationId: DEMO_ORGANIZATION_ID,
+        organizationId,
         urgency: {
           gte: 4,
         },
@@ -192,7 +194,7 @@ export default async function EmailsPage({
     prisma.email.groupBy({
       by: ["category"],
       where: {
-        organizationId: DEMO_ORGANIZATION_ID,
+        organizationId,
       },
       _count: {
         category: true,

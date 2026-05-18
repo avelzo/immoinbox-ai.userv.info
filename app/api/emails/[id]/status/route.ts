@@ -17,7 +17,6 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     const { id } = await params;
 
     const body = await request.json();
-    console.log("Received status update request:", { id, body });
 
     const parsed = BodySchema.safeParse(body);
 

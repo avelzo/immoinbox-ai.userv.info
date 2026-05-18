@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+
 import { getSession } from "@/lib/auth-server";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { UserMenu } from "@/components/layout/UserMenu";
 
 export default async function DashboardLayout({
   children,
@@ -9,7 +11,7 @@ export default async function DashboardLayout({
 }) {
   const session = await getSession();
 
-  if (!session) {
+  if (!session?.user?.email) {
     redirect("/login");
   }
 
@@ -17,7 +19,13 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
+        <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
+          <div className="flex items-center justify-end px-6 py-4">
+            <UserMenu email={session.user.email} />
+          </div>
+        </header>
+
         {children}
       </div>
     </div>

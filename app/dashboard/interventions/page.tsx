@@ -5,7 +5,8 @@ import {
   getInterventionStatusLabel,
   getInterventionStatusClass,
 } from "@/lib/intervention-ui";
-import { DEMO_ORGANIZATION_ID } from "@/lib/demo-config";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { redirect } from "next/navigation";
 
 type InterventionsPageProps = {
   searchParams: Promise<{
@@ -16,10 +17,14 @@ type InterventionsPageProps = {
 export default async function InterventionsPage({
   searchParams,
 }: InterventionsPageProps) {
+  const organizationId = await getCurrentUserOrganizationId();
+  if (!organizationId) {
+    redirect("/login");
+  }
   const params = await searchParams;
   const status = params.status;
   const baseWhere = {
-    organizationId: DEMO_ORGANIZATION_ID,
+    organizationId,
   };
 //   const where = status ? { status: status as any } : {};
   const where = status

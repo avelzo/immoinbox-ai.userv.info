@@ -4,7 +4,8 @@ import Link from "next/link";
 import { CopyButton } from "@/components/CopyButton";
 import { EmailStatusButton } from "@/components/EmailStatusButton";
 import { CreateInterventionButton } from "@/components/CreateInterventionButton";
-import { DEMO_ORGANIZATION_ID } from "@/lib/demo-config";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { redirect } from "next/navigation";
 import {
   getCategoryLabel,
   getCategoryClass,
@@ -21,10 +22,14 @@ type PageProps = {
 };
 
 export default async function EmailDetailPage({ params }: PageProps) {
+  const organizationId = await getCurrentUserOrganizationId();
+  if (!organizationId) {
+    redirect("/login");
+  }
   const { id } = await params;
 
   const email = await prisma.email.findFirst({
-    where: { id, organizationId: DEMO_ORGANIZATION_ID },
+    where: { id, organizationId },
     include: {
       interventions: true,
     },
