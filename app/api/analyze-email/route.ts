@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { isValidN8nRequest } from "@/lib/n8n-auth";
+import {
+  buildAnalyzeEmailDuplicateResponse,
+  ensureInterventionForEmail,
+} from "@/lib/intervention-from-email";
+import { formatInterventionForApi } from "@/lib/intervention-ui";
 import { buildEmailAnalysisPrompt } from "@/lib/prompts/email-analysis";
 
 const client = new OpenAI({
@@ -20,6 +27,10 @@ const BodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!isValidN8nRequest(request)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const parsed = BodySchema.safeParse(body);
 
@@ -40,8 +51,10 @@ export async function POST(request: Request) {
       from,
       to,
       content,
-      externalMessageId,
+      externalMessageId: rawExternalMessageId,
     } = parsed.data;
+
+    const externalMessageId = rawExternalMessageId?.trim() || undefined;
 
     if (externalMessageId) {
       const existingEmail = await prisma.email.findFirst({
@@ -52,11 +65,9 @@ export async function POST(request: Request) {
       });
 
       if (existingEmail) {
-        return NextResponse.json({
-          success: true,
-          duplicated: true,
-          email: existingEmail,
-        });
+        return NextResponse.json(
+          await buildAnalyzeEmailDuplicateResponse(existingEmail)
+        );
       }
     }
     const cleanContent = content
@@ -137,46 +148,84 @@ export async function POST(request: Request) {
 
     const analysis = JSON.parse(response.output_text);
 
-    const savedEmail = await prisma.email.create({
-      data: {
-        organizationId,
-        mailboxId,
-
-        externalMessageId,
-        from,
-        to,
-        subject,
-        textContent: cleanContent,
-
-        category: analysis.category,
-        urgency: analysis.urgency,
-        summary: analysis.summary,
-        recommendedAction: analysis.recommendedAction,
-        suggestedReply: analysis.suggestedReply,
-        senderRole: analysis.senderRole,
-        status: "NEW",
-      },
-    });
-    
-    let createdIntervention = null;
-    if (analysis.category === "INTERVENTION") {
-      createdIntervention = await prisma.intervention.create({
-        data: {
+    if (externalMessageId) {
+      const existingAfterAnalysis = await prisma.email.findFirst({
+        where: {
+          externalMessageId,
           organizationId,
-          title: analysis.summary || subject,
-          description: analysis.recommendedAction,
-          status: "PENDING",
-          technicianName: analysis.senderRole === "TECHNICIAN" ? from : null,
-          incidentEmailId: savedEmail.id,
         },
       });
+
+      if (existingAfterAnalysis) {
+        return NextResponse.json(
+          await buildAnalyzeEmailDuplicateResponse(existingAfterAnalysis)
+        );
+      }
     }
+
+    let savedEmail;
+    try {
+      savedEmail = await prisma.email.create({
+        data: {
+          organizationId,
+          mailboxId,
+
+          externalMessageId,
+          from,
+          to,
+          subject,
+          textContent: cleanContent,
+
+          category: analysis.category,
+          urgency: analysis.urgency,
+          summary: analysis.summary,
+          recommendedAction: analysis.recommendedAction,
+          suggestedReply: analysis.suggestedReply,
+          senderRole: analysis.senderRole,
+          status: "NEW",
+        },
+      });
+    } catch (error) {
+      if (
+        externalMessageId &&
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existingEmail = await prisma.email.findFirst({
+          where: {
+            externalMessageId,
+            organizationId,
+          },
+        });
+
+        if (existingEmail) {
+          return NextResponse.json(
+            await buildAnalyzeEmailDuplicateResponse(existingEmail)
+          );
+        }
+      }
+
+      throw error;
+    }
+    
+    const createdIntervention = await ensureInterventionForEmail({
+      organizationId,
+      email: savedEmail,
+      category: analysis.category,
+      summary: analysis.summary,
+      recommendedAction: analysis.recommendedAction,
+      subject,
+      from,
+      senderRole: analysis.senderRole,
+    });
 
     return NextResponse.json({
       success: true,
       duplicated: false,
       email: savedEmail,
-      intervention: createdIntervention,
+      intervention: createdIntervention
+        ? formatInterventionForApi(createdIntervention)
+        : null,
     });
   } catch (error) {
     console.error("Analyze email error:", error);

@@ -19,7 +19,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 md:ml-64">
         <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
           <div className="flex items-center justify-end px-6 py-4">
             <UserMenu email={session.user.email} />

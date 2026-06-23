@@ -12,7 +12,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - mongodb
+      mongo-init:
+        condition: service_completed_successfully
 
   mongodb:
     image: mongo:7
@@ -24,21 +25,21 @@ services:
     volumes:
       - mongodb_data:/data/db
 
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: immoinbox-n8n
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      N8N_HOST: localhost
-      N8N_PORT: 5678
-      N8N_PROTOCOL: http
-      NODE_ENV: development
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - n8n_data:/home/node/.n8n
+  mongo-init:
+    image: mongo:7
+    container_name: immoinbox-mongo-init
+    depends_on:
+      - mongodb
+    restart: "no"
+    entrypoint: >
+      bash -c "
+      until mongosh --host mongodb:27017 --quiet --eval 'db.adminCommand({ ping: 1 })' &>/dev/null; do sleep 1; done &&
+      mongosh --host mongodb:27017 --quiet --eval \"
+        try { rs.status(); quit(0); } catch (e) {
+          rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongodb:27017' }] });
+        }
+      \"
+      "
 
   mongo-express:
     image: mongo-express
@@ -47,11 +48,33 @@ services:
     ports:
       - "8081:8081"
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/?replicaSet=rs0
       ME_CONFIG_BASICAUTH: "false"
     depends_on:
-      - mongodb
-      
+      mongo-init:
+        condition: service_completed_successfully
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: immoinbox-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    env_file:
+      - .env
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      NODE_ENV: development
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - app
+
 volumes:
   mongodb_data:
   n8n_data:

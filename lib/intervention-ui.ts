@@ -9,6 +9,15 @@ export function getInterventionStatusLabel(status: string) {
   return labels[status] ?? status;
 }
 
+export function formatInterventionForApi<T extends { status: string }>(
+  intervention: T
+) {
+  return {
+    ...intervention,
+    statusLabel: getInterventionStatusLabel(intervention.status),
+  };
+}
+
 export function getInterventionStatusClass(status: string) {
   const classes: Record<string, string> = {
     PENDING: "bg-orange-100 text-orange-700",

@@ -1,19 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { Prisma } from "@prisma/client";
-import { EmailStatusButton } from "@/components/EmailStatusButton";
-import { CreateInterventionButton } from "@/components/CreateInterventionButton";
+import { EmailListRow } from "@/components/emails/EmailListRow";
 import { EMAIL_CATEGORIES } from "@/lib/email-categories";
 import { getCurrentUserOrganizationId } from "@/lib/current-user";
 import { redirect } from "next/navigation";
-import {
-  getCategoryLabel,
-  getCategoryClass,
-  getUrgencyLabel,
-  getUrgencyClass,
-  getStatusLabel,
-  getStatusClass,
-} from "@/lib/email-ui";
 
 type EmailsPageProps = {
   searchParams: Promise<{
@@ -88,6 +79,14 @@ function StatsCard({
       </p>
     </div>
   );
+}
+
+function formatEmailDate(date: Date) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Paris",
+  }).format(date);
 }
 
 export default async function EmailsPage({searchParams}: EmailsPageProps) {
@@ -440,98 +439,11 @@ export default async function EmailsPage({searchParams}: EmailsPageProps) {
 
               <tbody className="divide-y divide-slate-100 text-sm">
                 {emails.map((email) => (
-                  <tr
+                  <EmailListRow
                     key={email.id}
-                    className={`transition-colors hover:bg-slate-50 ${
-                      email.status === "PROCESSED"
-                        ? "bg-slate-50 opacity-70"
-                        : ""
-                    }`}
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-                      {new Intl.DateTimeFormat(
-                        "fr-FR",
-                        {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        }
-                      ).format(email.receivedAt)}
-                    </td>
-
-                    <td className="px-4 py-3 text-slate-700">
-                      {email.from}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/dashboard/emails/${email.id}`}
-                        className="font-medium text-slate-900 hover:underline"
-                      >
-                        {email.subject}
-                      </Link>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getCategoryClass(
-                          email.category
-                        )}`}
-                      >
-                        {getCategoryLabel(
-                          email.category
-                        )}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getUrgencyClass(
-                          email.urgency
-                        )}`}
-                      >
-                        {getUrgencyLabel(
-                          email.urgency
-                        )}
-                      </span>
-                    </td>
-
-                    <td className="max-w-md px-4 py-3 text-slate-600">
-                      {email.summary ??
-                        "Aucun résumé"}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                          email.status
-                        )}`}
-                      >
-                        {getStatusLabel(
-                          email.status
-                        )}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {email.interventions.length > 0 ? (
-                        <Link
-                          href={`/dashboard/interventions/${email.interventions[0].id}`}
-                          className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-200"
-                        >
-                          Voir intervention
-                        </Link>
-                      ) : email.category === "INCIDENT" ? (
-                        <CreateInterventionButton emailId={email.id} size="sm" />
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <EmailStatusButton
-                        emailId={email.id}
-                        initialStatus={email.status}
-                      />
-                    </td>
-                  </tr>
+                    email={email}
+                    formattedReceivedAt={formatEmailDate(email.receivedAt)}
+                  />
                 ))}
               </tbody>
             </table>

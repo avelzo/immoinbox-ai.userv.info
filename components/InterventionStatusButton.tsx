@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getInterventionStatusLabel } from "@/lib/intervention-ui";
 
 type InterventionStatus =
   | "PENDING"
@@ -15,13 +16,6 @@ const statusOrder: InterventionStatus[] = [
   "IN_PROGRESS",
   "COMPLETED",
 ];
-
-const statusLabels: Record<InterventionStatus, string> = {
-  PENDING: "En attente",
-  SCHEDULED: "Planifiée",
-  IN_PROGRESS: "En cours",
-  COMPLETED: "Terminée",
-};
 
 function getNextStatus(status: InterventionStatus): InterventionStatus {
   const index = statusOrder.indexOf(status);
@@ -88,7 +82,7 @@ export function InterventionStatusButton({
         ? "Mise à jour..."
         : isCompleted
         ? "Terminée"
-        : `Passer à : ${statusLabels[nextStatus]}`}
+        : `Passer à : ${getInterventionStatusLabel(nextStatus)}`}
     </button>
   );
 }

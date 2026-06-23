@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { InterventionStatusButton } from "@/components/InterventionStatusButton";
-import {
-  getInterventionStatusLabel,
-  getInterventionStatusClass,
-} from "@/lib/intervention-ui";
+import { InterventionListRow } from "@/components/interventions/InterventionListRow";
 import { getCurrentUserOrganizationId } from "@/lib/current-user";
 import { redirect } from "next/navigation";
 
@@ -13,6 +9,14 @@ type InterventionsPageProps = {
     status?: string;
   }>;
 };
+
+function formatInterventionDate(date: Date) {
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Europe/Paris",
+  }).format(date);
+}
 
 export default async function InterventionsPage({
   searchParams,
@@ -175,80 +179,13 @@ export default async function InterventionsPage({
 
               <tbody className="divide-y divide-slate-100 text-sm">
                 {interventions.map((intervention) => (
-                  <tr
+                  <InterventionListRow
                     key={intervention.id}
-                    className="hover:bg-slate-50"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-                      {new Intl.DateTimeFormat(
-                        "fr-FR",
-                        {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        }
-                      ).format(intervention.createdAt)}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <div>
-                        <Link
-                            href={`/dashboard/interventions/${intervention.id}`}
-                            className="font-medium text-slate-900 hover:underline"
-                            >
-                            {intervention.title}
-                        </Link>
-
-                        {intervention.description && (
-                          <p className="mt-1 text-slate-500">
-                            {intervention.description}
-                          </p>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3 text-slate-700">
-                      {intervention.technicianName ??
-                        "Non assigné"}
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getInterventionStatusClass(
-                          intervention.status
-                        )}`}
-                      >
-                        {getInterventionStatusLabel(
-                          intervention.status
-                        )}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      {intervention.incidentEmail ? (
-                        <Link
-                          href={`/dashboard/emails/${intervention.incidentEmail.id}`}
-                          className="text-sm font-medium text-slate-900 hover:underline"
-                        >
-                          {
-                            intervention.incidentEmail
-                              .subject
-                          }
-                        </Link>
-                      ) : (
-                        <span className="text-slate-400">
-                          Aucun incident lié
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3">
-                        <InterventionStatusButton
-                            interventionId={intervention.id}
-                            initialStatus={intervention.status}
-                        />
-                    </td>
-
-                  </tr>
+                    intervention={intervention}
+                    formattedCreatedAt={formatInterventionDate(
+                      intervention.createdAt
+                    )}
+                  />
                 ))}
               </tbody>
             </table>

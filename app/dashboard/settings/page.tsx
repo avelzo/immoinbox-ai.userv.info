@@ -41,7 +41,7 @@ export default async function SettingsPage() {
       </main>
     );
   }
-  const localApiBaseUrl = "http://host.docker.internal:3000";
+  const n8nApiBaseUrl = "http://app:3000";
 
   return (
     <main className="p-6">
@@ -182,11 +182,11 @@ export default async function SettingsPage() {
 
                           <div className="mt-3 space-y-2 text-xs">
                             <code className="block break-all rounded-lg bg-slate-100 p-2 text-slate-700">
-                              {localApiBaseUrl}/api/n8n/mailboxes/{mailbox.id}
+                              {n8nApiBaseUrl}/api/n8n/mailboxes/{mailbox.id}
                             </code>
 
                             <code className="block break-all rounded-lg bg-slate-100 p-2 text-slate-700">
-                              {localApiBaseUrl}/api/analyze-email
+                              {n8nApiBaseUrl}/api/analyze-email
                             </code>
                           </div>
                         </details>
@@ -197,8 +197,10 @@ export default async function SettingsPage() {
 
                         <CopyN8nConfigButton
                           mailboxId={mailbox.id}
-                          configEndpoint={`${localApiBaseUrl}/api/n8n/mailboxes/${mailbox.id}`}
-                          analyzeEndpoint={`${localApiBaseUrl}/api/analyze-email`}
+                          mailboxEmail={mailbox.email}
+                          organizationId={organization.id}
+                          configEndpoint={`${n8nApiBaseUrl}/api/n8n/mailboxes/${mailbox.id}`}
+                          analyzeEndpoint={`${n8nApiBaseUrl}/api/analyze-email`}
                         />
 
                         <Link
@@ -231,7 +233,7 @@ export default async function SettingsPage() {
             <div>
               <p className="text-sm text-slate-500">Endpoint API</p>
               <p className="mt-1 break-all rounded-xl bg-slate-100 px-3 py-2 font-mono text-sm text-slate-700">
-                {localApiBaseUrl}/api/analyze-email
+                {n8nApiBaseUrl}/api/analyze-email
               </p>
             </div>
 

@@ -1,0 +1,140 @@
+{
+  "id": "zznFDg293M9RDa4F",
+  "name": "ImmoInbox - Analyse emails",
+  "nodes": [
+    {
+      "parameters": {
+        "format": "resolved",
+        "options": {
+          "postProcessAction": "read"
+        }
+      },
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2.1,
+      "position": [-360, 0],
+      "id": "1e3335b4-f277-4a66-8363-7a01e5fa279f",
+      "name": "Trigger IMAP - Boîte agence",
+      "credentials": {
+        "imap": {
+          "id": "THf1ToFfJ7Jcbw7M",
+          "name": "Immo @ userv"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://app:3000/api/analyze-email",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ 'Bearer ' + $env.N8N_WEBHOOK_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  {\n    organizationId: '6a02026cc7614ba0caf62450',\n    mailboxId: '6a3ae4e8ddd4a84509075a9f',\n    subject: $json.subject,\n    from: $json.from?.text || $json.from,\n    to: ['immo@userv.info'],\n    content: $json.text || $json.html || $json.textHtml || '',\n    externalMessageId: $json.messageId || $json.metadata?.['message-id'] || ''\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [-40, 0],
+      "id": "0c491c4a-badc-4eba-819a-9c869830216b",
+      "name": "Envoyer à ImmoInbox API"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "intervention-exists",
+              "leftValue": "={{ $json.intervention }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [280, 0],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Intervention créée ?"
+    },
+    {
+      "parameters": {
+        "fromEmail": "immo@userv.info",
+        "toEmail": "admin@userv.info",
+        "subject": "=[ImmoInbox] Intervention: {{ $json.intervention.title }}",
+        "emailFormat": "text",
+        "text": "=Une intervention a été créée automatiquement.\n\nTitre: {{ $json.intervention.title }}\nStatut: {{ $json.intervention.statusLabel }}\nDescription: {{ $json.intervention.description }}\n\nEmail source: {{ $json.email.subject }}\nUrgence: {{ $json.email.urgency }}/5\n\nVoir dans l'app: http://localhost:3000/dashboard/interventions/{{ $json.intervention.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [600, -100],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Notifier admin intervention"
+    }
+  ],
+  "connections": {
+    "Trigger IMAP - Boîte agence": {
+      "main": [
+        [
+          {
+            "node": "Envoyer à ImmoInbox API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer à ImmoInbox API": {
+      "main": [
+        [
+          {
+            "node": "Intervention créée ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intervention créée ?": {
+      "main": [
+        [
+          {
+            "node": "Notifier admin intervention",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true
+}

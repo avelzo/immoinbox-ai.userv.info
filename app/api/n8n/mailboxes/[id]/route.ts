@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { decryptText } from "@/lib/crypto";
+import { isValidN8nRequest } from "@/lib/n8n-auth";
 
 type RouteProps = {
   params: Promise<{
@@ -9,13 +10,8 @@ type RouteProps = {
 };
 
 export async function GET(request: Request, { params }: RouteProps) {
-  const authHeader = request.headers.get("authorization");
-
-  if (authHeader !== `Bearer ${process.env.N8N_WEBHOOK_SECRET}`) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
+  if (!isValidN8nRequest(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;

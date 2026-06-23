@@ -64,6 +64,7 @@ export default async function EmailDetailPage({ params }: PageProps) {
               {new Intl.DateTimeFormat("fr-FR", {
                 dateStyle: "full",
                 timeStyle: "short",
+                timeZone: "Europe/Paris",
               }).format(email.receivedAt)}
             </p>
           </div>

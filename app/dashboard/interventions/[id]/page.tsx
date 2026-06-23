@@ -57,6 +57,7 @@ export default async function InterventionDetailPage({ params }: PageProps) {
                 {new Intl.DateTimeFormat("fr-FR", {
                   dateStyle: "full",
                   timeStyle: "short",
+                  timeZone: "Europe/Paris",
                 }).format(intervention.createdAt)}
               </p>
             </div>

@@ -4,12 +4,16 @@ import { useState } from "react";
 
 type CopyN8nConfigButtonProps = {
   mailboxId: string;
+  mailboxEmail: string;
+  organizationId: string;
   analyzeEndpoint: string;
   configEndpoint: string;
 };
 
 export function CopyN8nConfigButton({
   mailboxId,
+  mailboxEmail,
+  organizationId,
   analyzeEndpoint,
   configEndpoint,
 }: CopyN8nConfigButtonProps) {
@@ -19,31 +23,38 @@ export function CopyN8nConfigButton({
     const text = `
 Configuration n8n - Mailbox ${mailboxId}
 
-1. Node Get Mailbox Config
-Method: GET
-URL: ${configEndpoint}
-Header:
-Authorization: Bearer VOTRE_SECRET_N8N
+Workflow : ImmoInbox - Analyse emails
 
-2. Node Send to ImmoInbox API
-Method: POST
-URL: ${analyzeEndpoint}
-Header:
-Authorization: Bearer VOTRE_SECRET_N8N
-Content-Type: application/json
+Node 1 — Email Trigger (IMAP)
+  Nom : Trigger IMAP - Boîte agence
 
-Body JSON Expression:
-{{
-  {
-    organizationId: $("Get Mailbox Config").item.json.organizationId,
-    mailboxId: $("Get Mailbox Config").item.json.id,
-    subject: $json.subject,
-    from: $json.from,
-    to: [$("Get Mailbox Config").item.json.email],
-    content: $json.content,
-    externalMessageId: $json.externalMessageId
-  }
-}}
+Node 2 — HTTP Request
+  Nom : Envoyer à ImmoInbox API
+  Method: POST
+  URL: ${analyzeEndpoint}
+  Headers:
+    Authorization (expression) : ={{ 'Bearer ' + $env.N8N_WEBHOOK_SECRET }}
+    Content-Type: application/json
+  Authentication: None
+  Body Content Type: JSON
+  Specify Body: Using JSON (mode Expression)
+
+  JSON Body:
+  {{
+    {
+      organizationId: '${organizationId}',
+      mailboxId: '${mailboxId}',
+      subject: $json.subject,
+      from: $json.from?.text || $json.from,
+      to: ['${mailboxEmail}'],
+      content: $json.text || $json.html || $json.textHtml || '',
+      externalMessageId: $json.messageId || $json.metadata?.['message-id'] || ''
+    }
+  }}
+
+Endpoint config mailbox (optionnel) :
+  GET ${configEndpoint}
+  Header Authorization (expression): ={{ 'Bearer ' + $env.N8N_WEBHOOK_SECRET }}
 `.trim();
 
     await navigator.clipboard.writeText(text);

@@ -43,7 +43,14 @@ export function getUrgencyClass(urgency?: number | null) {
 }
 
 export function getStatusLabel(status: string) {
-  return status === "PROCESSED" ? "Traité" : "Non traité";
+  const labels: Record<string, string> = {
+    NEW: "Nouveau",
+    PROCESSED: "Traité",
+    ARCHIVED: "Archivé",
+    ERROR: "Erreur",
+  };
+
+  return labels[status] ?? status;
 }
 
 export function getStatusClass(status: string) {
