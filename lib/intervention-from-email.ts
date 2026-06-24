@@ -18,6 +18,7 @@ type EnsureInterventionParams = {
   subject: string;
   from: string;
   senderRole: string;
+  interventionNotifyEmail: string | null;
 };
 
 export async function findInterventionForEmail(emailId: string) {
@@ -32,6 +33,10 @@ export async function ensureInterventionForEmail(
   params: EnsureInterventionParams
 ): Promise<Intervention | null> {
   if (!AUTO_INTERVENTION_CATEGORIES.has(params.category)) {
+    return null;
+  }
+
+  if (!params.interventionNotifyEmail?.trim()) {
     return null;
   }
 
@@ -67,13 +72,17 @@ export async function ensureInterventionForEmail(
   }
 }
 
-export async function buildAnalyzeEmailDuplicateResponse(email: Email) {
+export async function buildAnalyzeEmailDuplicateResponse(
+  email: Email,
+  interventionNotifyEmail: string | null
+) {
   const intervention = await findInterventionForEmail(email.id);
 
   return {
     success: true,
     duplicated: true,
     email,
+    interventionNotifyEmail,
     intervention: intervention
       ? formatInterventionForApi(intervention)
       : null,

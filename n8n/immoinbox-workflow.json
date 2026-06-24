@@ -84,7 +84,7 @@
     {
       "parameters": {
         "fromEmail": "immo@userv.info",
-        "toEmail": "admin@userv.info",
+        "toEmail": "={{ $json.interventionNotifyEmail }}",
         "subject": "=[ImmoInbox] Intervention: {{ $json.intervention.title }}",
         "emailFormat": "text",
         "text": "=Une intervention a été créée automatiquement.\n\nTitre: {{ $json.intervention.title }}\nStatut: {{ $json.intervention.statusLabel }}\nDescription: {{ $json.intervention.description }}\n\nEmail source: {{ $json.email.subject }}\nUrgence: {{ $json.email.urgency }}/5\n\nVoir dans l'app: http://localhost:3000/dashboard/interventions/{{ $json.intervention.id }}",

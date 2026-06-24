@@ -37,8 +37,8 @@ export function CreateInterventionButton({
 
   const className =
     size === "sm"
-      ? "rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-200 disabled:opacity-50"
-      : "rounded-xl bg-cyan-600 px-4 py-2 text-sm font-medium text-white hover:bg-cyan-700 disabled:opacity-50";
+      ? "rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 ring-1 ring-cyan-200/80 transition hover:bg-cyan-100 disabled:opacity-50"
+      : "rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50";
 
   return (
     <button

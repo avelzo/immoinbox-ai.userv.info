@@ -56,6 +56,21 @@ export async function POST(request: Request) {
 
     const externalMessageId = rawExternalMessageId?.trim() || undefined;
 
+    const organization = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { interventionNotifyEmail: true },
+    });
+
+    if (!organization) {
+      return NextResponse.json(
+        { error: "Organization not found" },
+        { status: 404 }
+      );
+    }
+
+    const interventionNotifyEmail =
+      organization.interventionNotifyEmail?.trim() || null;
+
     if (externalMessageId) {
       const existingEmail = await prisma.email.findFirst({
         where: {
@@ -66,7 +81,10 @@ export async function POST(request: Request) {
 
       if (existingEmail) {
         return NextResponse.json(
-          await buildAnalyzeEmailDuplicateResponse(existingEmail)
+          await buildAnalyzeEmailDuplicateResponse(
+            existingEmail,
+            interventionNotifyEmail
+          )
         );
       }
     }
@@ -158,7 +176,10 @@ export async function POST(request: Request) {
 
       if (existingAfterAnalysis) {
         return NextResponse.json(
-          await buildAnalyzeEmailDuplicateResponse(existingAfterAnalysis)
+          await buildAnalyzeEmailDuplicateResponse(
+            existingAfterAnalysis,
+            interventionNotifyEmail
+          )
         );
       }
     }
@@ -200,7 +221,10 @@ export async function POST(request: Request) {
 
         if (existingEmail) {
           return NextResponse.json(
-            await buildAnalyzeEmailDuplicateResponse(existingEmail)
+            await buildAnalyzeEmailDuplicateResponse(
+              existingEmail,
+              interventionNotifyEmail
+            )
           );
         }
       }
@@ -217,12 +241,14 @@ export async function POST(request: Request) {
       subject,
       from,
       senderRole: analysis.senderRole,
+      interventionNotifyEmail,
     });
 
     return NextResponse.json({
       success: true,
       duplicated: false,
       email: savedEmail,
+      interventionNotifyEmail,
       intervention: createdIntervention
         ? formatInterventionForApi(createdIntervention)
         : null,

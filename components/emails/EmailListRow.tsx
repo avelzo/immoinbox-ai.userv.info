@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import type { Email, EmailStatus, Intervention } from "@prisma/client";
 import { EmailStatusButton } from "@/components/EmailStatusButton";
 import { CreateInterventionButton } from "@/components/CreateInterventionButton";
@@ -30,79 +31,87 @@ export function EmailListRow({
   formattedReceivedAt,
 }: EmailListRowProps) {
   const router = useRouter();
+  const isProcessed = email.status === "PROCESSED";
 
   return (
-    <tr
+    <article
       onClick={() => router.push(`/dashboard/emails/${email.id}`)}
-      className={`cursor-pointer transition-colors hover:bg-slate-50 ${
-        email.status === "PROCESSED" ? "bg-slate-50 opacity-70" : ""
+      className={`group cursor-pointer border-b border-slate-100 px-4 py-4 transition last:border-b-0 sm:px-5 ${
+        isProcessed
+          ? "bg-slate-50/60 hover:bg-slate-50"
+          : "hover:bg-indigo-50/30"
       }`}
     >
-      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-        {formattedReceivedAt}
-      </td>
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+            <time>{formattedReceivedAt}</time>
+            <span aria-hidden="true">·</span>
+            <span className="truncate">{email.from}</span>
+          </div>
 
-      <td className="px-4 py-3 text-slate-700">{email.from}</td>
+          <h3
+            className={`mt-1.5 font-semibold leading-snug text-slate-900 ${
+              isProcessed ? "opacity-80" : ""
+            }`}
+          >
+            {email.subject}
+          </h3>
 
-      <td className="px-4 py-3">
-        <span className="font-medium text-slate-900">{email.subject}</span>
-      </td>
+          <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+            {email.summary ?? "Aucun résumé"}
+          </p>
 
-      <td className="px-4 py-3">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${getCategoryClass(
-            email.category
-          )}`}
-        >
-          {getCategoryLabel(email.category)}
-        </span>
-      </td>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryClass(
+                email.category
+              )}`}
+            >
+              {getCategoryLabel(email.category)}
+            </span>
 
-      <td className="px-4 py-3">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${getUrgencyClass(
-            email.urgency
-          )}`}
-        >
-          {getUrgencyLabel(email.urgency)}
-        </span>
-      </td>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getUrgencyClass(
+                email.urgency
+              )}`}
+            >
+              {getUrgencyLabel(email.urgency)}
+            </span>
 
-      <td className="max-w-md px-4 py-3 text-slate-600">
-        {email.summary ?? "Aucun résumé"}
-      </td>
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
+                email.status
+              )}`}
+            >
+              {getStatusLabel(email.status)}
+            </span>
+          </div>
+        </div>
 
-      <td className="px-4 py-3">
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-            email.status
-          )}`}
-        >
-          {getStatusLabel(email.status)}
-        </span>
-      </td>
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-indigo-400" />
+      </div>
 
-      <td className="px-4 py-3" onClick={stopRowNavigation}>
+      <div
+        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100/80 pt-3"
+        onClick={stopRowNavigation}
+      >
         {email.interventions.length > 0 ? (
           <Link
             href={`/dashboard/interventions/${email.interventions[0].id}`}
-            className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-medium text-cyan-700 hover:bg-cyan-200"
+            className="rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 ring-1 ring-cyan-200/80 transition hover:bg-cyan-100"
           >
             Voir intervention
           </Link>
         ) : email.category === "INCIDENT" ? (
           <CreateInterventionButton emailId={email.id} size="sm" />
-        ) : (
-          <span className="text-xs text-slate-400">—</span>
-        )}
-      </td>
+        ) : null}
 
-      <td className="px-4 py-3" onClick={stopRowNavigation}>
         <EmailStatusButton
           emailId={email.id}
           initialStatus={email.status as EmailStatus}
         />
-      </td>
-    </tr>
+      </div>
+    </article>
   );
 }

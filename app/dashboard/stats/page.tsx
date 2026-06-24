@@ -1,4 +1,12 @@
 import { redirect } from "next/navigation";
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle2,
+  Inbox,
+  Mail,
+  Wrench,
+} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserOrganizationId } from "@/lib/current-user";
 import { EMAIL_CATEGORIES } from "@/lib/email-categories";
@@ -10,24 +18,13 @@ import {
   getInterventionStatusClass,
   getInterventionStatusLabel,
 } from "@/lib/intervention-ui";
-
-function StatCard({
-  label,
-  value,
-  description,
-}: {
-  label: string;
-  value: number;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-2 text-4xl font-bold text-slate-900">{value}</p>
-      <p className="mt-2 text-sm text-slate-500">{description}</p>
-    </div>
-  );
-}
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { DashboardSectionHeader } from "@/components/dashboard/DashboardSectionHeader";
+import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
+import {
+  categoryBarColors,
+  interventionBarColors,
+} from "@/lib/dashboard-ui";
 
 export default async function StatsPage() {
   const organizationId = await getCurrentUserOrganizationId();
@@ -129,50 +126,55 @@ export default async function StatsPage() {
 
   return (
     <main className="p-6">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">
-            Statistiques
-          </h1>
+      <div className="mx-auto max-w-5xl space-y-8">
+        <DashboardPageHeader
+          title="Statistiques"
+          description="Vue d'ensemble de l'activité emails et interventions."
+        />
 
-          <p className="mt-2 text-slate-600">
-            Vue d’ensemble de l’activité emails et interventions.
-          </p>
-        </div>
-
-        <section className="grid gap-4 md:grid-cols-4">
-          <StatCard
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <DashboardStatCard
             label="Emails"
             value={totalEmails}
-            description="Emails analysés par l’IA."
+            description="Analysés par l'IA"
+            icon={Mail}
+            accent="indigo"
           />
 
-          <StatCard
+          <DashboardStatCard
             label="Non traités"
             value={newEmails}
-            description="Emails encore à traiter."
+            description="Encore à traiter"
+            icon={Inbox}
+            accent="orange"
           />
 
-          <StatCard
+          <DashboardStatCard
             label="Urgents"
             value={urgentEmails}
-            description={`${urgentRate}% des emails.`}
+            description={`${urgentRate}% des emails`}
+            icon={AlertTriangle}
+            accent="red"
           />
 
-          <StatCard
+          <DashboardStatCard
             label="Interventions"
             value={totalInterventions}
-            description="Demandes techniques créées."
+            description="Demandes techniques"
+            icon={Wrench}
+            accent="cyan"
           />
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Emails par catégorie
-            </h2>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <DashboardSectionHeader
+              icon={Mail}
+              title="Emails par catégorie"
+              description="Répartition du volume analysé"
+            />
 
-            <div className="mt-6 space-y-3">
+            <div className="space-y-4 p-6 pt-2">
               {Object.entries(EMAIL_CATEGORIES).map(([key]) => {
                 const count = categoryCounts[key] ?? 0;
                 const percentage =
@@ -182,23 +184,25 @@ export default async function StatsPage() {
 
                 return (
                   <div key={key}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
+                    <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getCategoryClass(
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryClass(
                           key
                         )}`}
                       >
                         {getCategoryLabel(key)}
                       </span>
 
-                      <span className="text-slate-500">
-                        {count} — {percentage}%
+                      <span className="shrink-0 text-slate-500">
+                        {count} · {percentage}%
                       </span>
                     </div>
 
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-slate-900"
+                        className={`h-full rounded-full transition-all ${
+                          categoryBarColors[key] ?? "bg-indigo-500"
+                        }`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -208,12 +212,14 @@ export default async function StatsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Interventions par statut
-            </h2>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <DashboardSectionHeader
+              icon={Wrench}
+              title="Interventions par statut"
+              description="Suivi opérationnel en cours"
+            />
 
-            <div className="mt-6 space-y-3">
+            <div className="space-y-4 p-6 pt-2">
               {interventionStats.map((item) => {
                 const percentage =
                   totalInterventions > 0
@@ -222,23 +228,25 @@ export default async function StatsPage() {
 
                 return (
                   <div key={item.status}>
-                    <div className="mb-1 flex items-center justify-between text-sm">
+                    <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getInterventionStatusClass(
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getInterventionStatusClass(
                           item.status
                         )}`}
                       >
                         {getInterventionStatusLabel(item.status)}
                       </span>
 
-                      <span className="text-slate-500">
-                        {item.count} — {percentage}%
+                      <span className="shrink-0 text-slate-500">
+                        {item.count} · {percentage}%
                       </span>
                     </div>
 
                     <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <div
-                        className="h-full rounded-full bg-slate-900"
+                        className={`h-full rounded-full transition-all ${
+                          interventionBarColors[item.status] ?? "bg-indigo-500"
+                        }`}
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -250,23 +258,21 @@ export default async function StatsPage() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Traitement emails
-            </h2>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <DashboardSectionHeader
+              icon={CheckCircle2}
+              title="Traitement emails"
+              description="Part des emails marqués comme traités"
+            />
 
-            <div className="mt-6">
-              <p className="text-sm text-slate-500">
-                Emails marqués comme traités
-              </p>
-
-              <p className="mt-2 text-4xl font-bold text-slate-900">
+            <div className="p-6 pt-2">
+              <p className="text-4xl font-bold tracking-tight text-indigo-600">
                 {processedRate}%
               </p>
 
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-full rounded-full bg-emerald-600"
+                  className="h-full rounded-full bg-emerald-500 transition-all"
                   style={{ width: `${processedRate}%` }}
                 />
               </div>
@@ -277,26 +283,32 @@ export default async function StatsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Lecture métier
-            </h2>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <DashboardSectionHeader
+              icon={BarChart3}
+              title="Lecture métier"
+              description="Indicateurs clés pour votre agence"
+            />
 
-            <div className="mt-6 space-y-4 text-sm text-slate-600">
+            <div className="space-y-4 p-6 pt-2 text-sm leading-relaxed text-slate-600">
               <p>
                 Les emails urgents représentent{" "}
-                <strong className="text-slate-900">{urgentRate}%</strong>{" "}
-                des messages analysés.
+                <strong className="text-slate-900">{urgentRate}%</strong> des
+                messages analysés.
               </p>
 
               <p>
-                Les interventions permettent de transformer les incidents en
-                suivi technique concret.
+                Les interventions transforment les incidents en suivi technique
+                concret, avec{" "}
+                <strong className="text-slate-900">
+                  {totalInterventions}
+                </strong>{" "}
+                dossiers ouverts au total.
               </p>
 
-              <p>
-                Cette page servira ensuite à mesurer le temps gagné, le volume
-                traité et la réactivité de l’agence.
+              <p className="rounded-xl bg-indigo-50/60 px-4 py-3 text-indigo-900/80">
+                Cette page évoluera pour mesurer le temps gagné, le volume
+                traité et la réactivité de l&apos;agence.
               </p>
             </div>
           </div>

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { InterventionListRow } from "@/components/interventions/InterventionListRow";
+import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
+import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
+import { filterPillClass } from "@/lib/dashboard-ui";
 import { getCurrentUserOrganizationId } from "@/lib/current-user";
 import { redirect } from "next/navigation";
 
@@ -30,14 +33,13 @@ export default async function InterventionsPage({
   const baseWhere = {
     organizationId,
   };
-//   const where = status ? { status: status as any } : {};
   const where = status
     ? {
         ...baseWhere,
         status: status as any,
       }
     : baseWhere;
-  
+
   const [
     interventions,
     totalCount,
@@ -47,114 +49,123 @@ export default async function InterventionsPage({
     completedCount,
   ] = await Promise.all([
     prisma.intervention.findMany({
-        where,
-        include: {
-            incidentEmail: true,
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
+      where,
+      include: {
+        incidentEmail: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
     }),
 
     prisma.intervention.count({
-        where: baseWhere,
+      where: baseWhere,
     }),
 
     prisma.intervention.count({
-        where: { ...baseWhere, status: "PENDING" },
+      where: { ...baseWhere, status: "PENDING" },
     }),
 
     prisma.intervention.count({
-        where: { ...baseWhere, status: "SCHEDULED" },
+      where: { ...baseWhere, status: "SCHEDULED" },
     }),
 
     prisma.intervention.count({
-        where: { ...baseWhere, status: "IN_PROGRESS" },
+      where: { ...baseWhere, status: "IN_PROGRESS" },
     }),
 
     prisma.intervention.count({
-        where: { ...baseWhere, status: "COMPLETED" },
+      where: { ...baseWhere, status: "COMPLETED" },
     }),
   ]);
 
   return (
     <main className="p-6">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">
-              Interventions
-            </h1>
+      <div className="mx-auto max-w-5xl">
+        <DashboardPageHeader
+          title="Interventions"
+          description="Suivi des réparations et interventions techniques."
+          action={
+            <button
+              type="button"
+              className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
+            >
+              Nouvelle intervention
+            </button>
+          }
+        />
 
-            <p className="mt-2 text-slate-600">
-              Suivi des réparations et interventions techniques.
-            </p>
-          </div>
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <DashboardStatCard
+            label="Total"
+            value={totalCount}
+            accent="indigo"
+          />
 
-          <button className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-            Nouvelle intervention
-          </button>
+          <DashboardStatCard
+            label="En attente"
+            value={pendingCount}
+            accent="orange"
+          />
+
+          <DashboardStatCard
+            label="En cours"
+            value={inProgressCount}
+            accent="cyan"
+          />
+
+          <DashboardStatCard
+            label="Terminées"
+            value={completedCount}
+            accent="emerald"
+          />
         </div>
 
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Filtrer par statut
+          </p>
+
+          <div className="flex flex-wrap gap-2">
             <Link
-                href="/dashboard/interventions"
-                className={
-                !status
-                    ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200"
-                }
+              href="/dashboard/interventions"
+              className={filterPillClass(!status)}
             >
-                Toutes ({totalCount})
+              Toutes ({totalCount})
             </Link>
 
             <Link
-                href="/dashboard/interventions?status=PENDING"
-                className={
-                status === "PENDING"
-                    ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full bg-orange-100 px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-200"
-                }
+              href="/dashboard/interventions?status=PENDING"
+              className={filterPillClass(status === "PENDING", "orange")}
             >
-                En attente ({pendingCount})
+              En attente ({pendingCount})
             </Link>
 
             <Link
-                href="/dashboard/interventions?status=SCHEDULED"
-                className={
-                status === "SCHEDULED"
-                    ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-200"
-                }
+              href="/dashboard/interventions?status=SCHEDULED"
+              className={filterPillClass(status === "SCHEDULED", "blue")}
             >
-                Planifiées ({scheduledCount})
+              Planifiées ({scheduledCount})
             </Link>
 
             <Link
-                href="/dashboard/interventions?status=IN_PROGRESS"
-                className={
-                status === "IN_PROGRESS"
-                    ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full bg-cyan-100 px-4 py-2 text-sm font-medium text-cyan-700 hover:bg-cyan-200"
-                }
+              href="/dashboard/interventions?status=IN_PROGRESS"
+              className={filterPillClass(status === "IN_PROGRESS", "cyan")}
             >
-                En cours ({inProgressCount})
+              En cours ({inProgressCount})
             </Link>
 
             <Link
-                href="/dashboard/interventions?status=COMPLETED"
-                className={
-                status === "COMPLETED"
-                    ? "rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-                    : "rounded-full bg-emerald-100 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-200"
-                }
+              href="/dashboard/interventions?status=COMPLETED"
+              className={filterPillClass(status === "COMPLETED", "emerald")}
             >
-                Terminées ({completedCount})
+              Terminées ({completedCount})
             </Link>
+          </div>
         </div>
 
         {interventions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed bg-white p-12 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
             <p className="text-lg font-medium text-slate-700">
               Aucune intervention
             </p>
@@ -164,31 +175,16 @@ export default async function InterventionsPage({
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full border-collapse text-left">
-              <thead className="bg-slate-100 text-sm text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Intervention</th>
-                  <th className="px-4 py-3">Technicien</th>
-                  <th className="px-4 py-3">Statut</th>
-                  <th className="px-4 py-3">Incident lié</th>
-                  <th className="px-4 py-3">Action</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {interventions.map((intervention) => (
-                  <InterventionListRow
-                    key={intervention.id}
-                    intervention={intervention}
-                    formattedCreatedAt={formatInterventionDate(
-                      intervention.createdAt
-                    )}
-                  />
-                ))}
-              </tbody>
-            </table>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            {interventions.map((intervention) => (
+              <InterventionListRow
+                key={intervention.id}
+                intervention={intervention}
+                formattedCreatedAt={formatInterventionDate(
+                  intervention.createdAt
+                )}
+              />
+            ))}
           </div>
         )}
       </div>
