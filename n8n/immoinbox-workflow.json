@@ -41,7 +41,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{\n  {\n    organizationId: '6a02026cc7614ba0caf62450',\n    mailboxId: '6a3ae4e8ddd4a84509075a9f',\n    subject: $json.subject,\n    from: $json.from?.text || $json.from,\n    to: ['immo@userv.info'],\n    content: $json.text || $json.html || $json.textHtml || '',\n    externalMessageId: $json.messageId || $json.metadata?.['message-id'] || ''\n  }\n}}",
+        "jsonBody": "={{\n  {\n    organizationId: '6a02026cc7614ba0caf62450',\n    mailboxId: '6a02026cc7614ba0caf62451',\n    subject: $json.subject,\n    from: $json.from?.text || $json.from,\n    to: ['immo@userv.info'],\n    content: $json.text || $json.html || $json.textHtml || '',\n    externalMessageId: $json.messageId || $json.metadata?.['message-id'] || ''\n  }\n}}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",

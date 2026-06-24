@@ -101,7 +101,7 @@ npx prisma db push
 npx prisma generate
 
 
-npm run seed:realistic
+npm run seed:demo
 
 
 

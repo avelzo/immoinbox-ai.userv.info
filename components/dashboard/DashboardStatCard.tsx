@@ -54,13 +54,13 @@ export function DashboardStatCard({
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-medium text-slate-500">{label}</p>
 
-        {Icon && (
-          <div
-            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${styles.icon}`}
-          >
-            <Icon className="h-4 w-4" />
-          </div>
-        )}
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+            Icon ? styles.icon : ""
+          }`}
+        >
+          {Icon && <Icon className="h-4 w-4" />}
+        </div>
       </div>
 
       <p className={`mt-2 text-3xl font-bold tracking-tight ${styles.value}`}>

@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import {
+  CheckCircle2,
+  Clock,
+  PlayCircle,
+  Wrench,
+} from "lucide-react";
 import { InterventionListRow } from "@/components/interventions/InterventionListRow";
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
@@ -99,24 +105,28 @@ export default async function InterventionsPage({
           <DashboardStatCard
             label="Total"
             value={totalCount}
+            icon={Wrench}
             accent="indigo"
           />
 
           <DashboardStatCard
             label="En attente"
             value={pendingCount}
+            icon={Clock}
             accent="orange"
           />
 
           <DashboardStatCard
             label="En cours"
             value={inProgressCount}
+            icon={PlayCircle}
             accent="cyan"
           />
 
           <DashboardStatCard
             label="Terminées"
             value={completedCount}
+            icon={CheckCircle2}
             accent="emerald"
           />
         </div>
@@ -175,7 +185,7 @@ export default async function InterventionsPage({
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <div className="space-y-3">
             {interventions.map((intervention) => (
               <InterventionListRow
                 key={intervention.id}

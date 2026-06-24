@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import {
   DEMO_ORGANIZATION_ID,
   DEMO_MAILBOX_ID,
+  DEMO_MAILBOX_EMAIL,
   DEMO_EMAIL,
 } from "../lib/demo-config";
 
@@ -22,14 +23,14 @@ async function main() {
   const mailbox = await prisma.mailbox.upsert({
     where: { id: DEMO_MAILBOX_ID },
     update: {
-      email: "contact@agence-demo.fr",
-      provider: "demo",
+      email: DEMO_MAILBOX_EMAIL,
+      provider: "imap",
     },
     create: {
       id: DEMO_MAILBOX_ID,
       organizationId: organization.id,
-      email: "contact@agence-demo.fr",
-      provider: "demo",
+      email: DEMO_MAILBOX_EMAIL,
+      provider: "imap",
     },
   });
 

@@ -1,7 +1,5 @@
 import Link from "next/link";
 
-const INCIDENT_EMAIL = process.env.INCIDENT_EMAIL || "";
-
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -200,7 +198,7 @@ export default function HomePage() {
             </ul>
 
             <a
-              href={`mailto:${INCIDENT_EMAIL}`}
+              href="mailto:admin@userv.info"
               className="mt-8 inline-flex rounded-xl bg-slate-950 px-6 py-3 font-medium text-white hover:bg-slate-800"
             >
               Me contacter

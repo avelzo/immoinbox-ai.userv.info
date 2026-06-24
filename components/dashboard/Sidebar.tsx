@@ -7,6 +7,7 @@ import {
   Wrench,
   BarChart3,
   Settings,
+  Presentation,
 } from "lucide-react";
 
 const navigation = [
@@ -24,6 +25,11 @@ const navigation = [
     label: "Statistiques",
     href: "/dashboard/stats",
     icon: BarChart3,
+  },
+  {
+    label: "Guide démo",
+    href: "/dashboard/demo",
+    icon: Presentation,
   },
   {
     label: "Paramètres",

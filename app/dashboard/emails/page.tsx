@@ -306,7 +306,7 @@ export default async function EmailsPage({ searchParams }: EmailsPageProps) {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          <div className="space-y-3">
             {emails.map((email) => (
               <EmailListRow
                 key={email.id}

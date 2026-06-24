@@ -36,10 +36,10 @@ export function EmailListRow({
   return (
     <article
       onClick={() => router.push(`/dashboard/emails/${email.id}`)}
-      className={`group cursor-pointer border-b border-slate-100 px-4 py-4 transition last:border-b-0 sm:px-5 ${
+      className={`group cursor-pointer rounded-xl border bg-white px-4 py-4 shadow-sm transition sm:px-5 ${
         isProcessed
-          ? "bg-slate-50/60 hover:bg-slate-50"
-          : "hover:bg-indigo-50/30"
+          ? "border-slate-200/80 bg-slate-50/50 hover:border-slate-300 hover:shadow-md"
+          : "border-slate-200/80 hover:border-indigo-200 hover:shadow-md"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -93,7 +93,7 @@ export function EmailListRow({
       </div>
 
       <div
-        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100/80 pt-3"
+        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3"
         onClick={stopRowNavigation}
       >
         {email.interventions.length > 0 ? (

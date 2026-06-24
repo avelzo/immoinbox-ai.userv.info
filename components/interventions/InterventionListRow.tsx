@@ -32,7 +32,7 @@ export function InterventionListRow({
       onClick={() =>
         router.push(`/dashboard/interventions/${intervention.id}`)
       }
-      className="group cursor-pointer border-b border-slate-100 px-4 py-4 transition last:border-b-0 hover:bg-indigo-50/30 sm:px-5"
+      className="group cursor-pointer rounded-xl border border-slate-200/80 bg-white px-4 py-4 shadow-sm transition hover:border-indigo-200 hover:shadow-md sm:px-5"
     >
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
@@ -87,7 +87,7 @@ export function InterventionListRow({
       </div>
 
       <div
-        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100/80 pt-3"
+        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3"
         onClick={stopRowNavigation}
       >
         <InterventionStatusButton
