@@ -64,11 +64,11 @@ export function EditMailboxForm({ mailbox }: EditMailboxFormProps) {
       onSubmit={handleSubmit}
       className="rounded-2xl border bg-white p-6 shadow-sm"
     >
-      <h2 className="text-xl font-semibold text-slate-900">
+      <h2 className="text-sm font-semibold text-anthracite">
         Modifier la boîte mail
       </h2>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 text-slate-800">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 text-anthracite/80">
         <input
           name="email"
           type="email"
@@ -113,7 +113,7 @@ export function EditMailboxForm({ mailbox }: EditMailboxFormProps) {
           className="rounded-xl border px-4 py-2 text-sm"
         />
 
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-anthracite/80">
           <input
             name="imapSecure"
             type="checkbox"
@@ -126,7 +126,7 @@ export function EditMailboxForm({ mailbox }: EditMailboxFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="mt-6 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+        className="mt-6 rounded-xl bg-forest px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
       >
         {loading ? "Modification..." : "Enregistrer"}
       </button>

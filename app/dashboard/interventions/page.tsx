@@ -1,11 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { InterventionStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  CheckCircle2,
-  Clock,
-  PlayCircle,
-  Wrench,
-} from "lucide-react";
+import { CheckCircle2, Clock, PlayCircle, Wrench } from "lucide-react";
 import { InterventionListRow } from "@/components/interventions/InterventionListRow";
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
@@ -35,14 +32,20 @@ export default async function InterventionsPage({
     redirect("/login");
   }
   const params = await searchParams;
-  const status = params.status;
+  const status =
+    params.status &&
+    Object.values(InterventionStatus).includes(
+      params.status as InterventionStatus,
+    )
+      ? (params.status as InterventionStatus)
+      : undefined;
   const baseWhere = {
     organizationId,
   };
   const where = status
     ? {
         ...baseWhere,
-        status: status as any,
+        status,
       }
     : baseWhere;
 
@@ -86,31 +89,23 @@ export default async function InterventionsPage({
   ]);
 
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl">
+    <main className="px-4 py-6 sm:px-6">
+      <div className="max-w-5xl">
         <DashboardPageHeader
           title="Interventions"
           description="Suivi des réparations et interventions techniques."
-          action={
-            <button
-              type="button"
-              className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
-            >
-              Nouvelle intervention
-            </button>
-          }
         />
 
-        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
           <DashboardStatCard
-            label="Total"
-            value={totalCount}
+            label="Planifiées"
+            value={scheduledCount}
             icon={Wrench}
             accent="indigo"
           />
 
           <DashboardStatCard
-            label="En attente"
+            label="À planifier"
             value={pendingCount}
             icon={Clock}
             accent="orange"
@@ -131,8 +126,8 @@ export default async function InterventionsPage({
           />
         </div>
 
-        <div className="mb-6 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <div className="mb-6 rounded-2xl border border-line bg-white p-4 shadow-sm sm:p-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
             Filtrer par statut
           </p>
 
@@ -148,7 +143,7 @@ export default async function InterventionsPage({
               href="/dashboard/interventions?status=PENDING"
               className={filterPillClass(status === "PENDING", "orange")}
             >
-              En attente ({pendingCount})
+              À planifier ({pendingCount})
             </Link>
 
             <Link
@@ -175,12 +170,12 @@ export default async function InterventionsPage({
         </div>
 
         {interventions.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-            <p className="text-lg font-medium text-slate-700">
+          <div className="rounded-2xl border border-dashed border-line bg-white p-12 text-center">
+            <p className="text-lg font-medium text-anthracite/80">
               Aucune intervention
             </p>
 
-            <p className="mt-2 text-slate-500">
+            <p className="mt-2 text-anthracite/60">
               Les interventions créées apparaîtront ici.
             </p>
           </div>
@@ -191,7 +186,7 @@ export default async function InterventionsPage({
                 key={intervention.id}
                 intervention={intervention}
                 formattedCreatedAt={formatInterventionDate(
-                  intervention.createdAt
+                  intervention.createdAt,
                 )}
               />
             ))}
@@ -201,3 +196,6 @@ export default async function InterventionsPage({
     </main>
   );
 }
+export const metadata: Metadata = {
+  title: "Suivi des interventions",
+};

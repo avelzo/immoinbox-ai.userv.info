@@ -1,316 +1,178 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  AlertTriangle,
-  BarChart3,
-  CheckCircle2,
-  Inbox,
-  Mail,
-  Wrench,
-} from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUserOrganizationId } from "@/lib/current-user";
 import { EMAIL_CATEGORIES } from "@/lib/email-categories";
-import {
-  getCategoryClass,
-  getCategoryLabel,
-} from "@/lib/email-ui";
-import {
-  getInterventionStatusClass,
-  getInterventionStatusLabel,
-} from "@/lib/intervention-ui";
-import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
-import { DashboardSectionHeader } from "@/components/dashboard/DashboardSectionHeader";
+import { getCategoryLabel } from "@/lib/email-ui";
+import { getInterventionStatusLabel } from "@/lib/intervention-ui";
 import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
 import {
-  categoryBarColors,
-  interventionBarColors,
-} from "@/lib/dashboard-ui";
+  CategoryChart,
+  WeeklyChart,
+  DistributionBars,
+} from "@/components/dashboard/ActivityCharts";
+
+export const metadata: Metadata = { title: "Statistiques" };
 
 export default async function StatsPage() {
   const organizationId = await getCurrentUserOrganizationId();
-
-  if (!organizationId) {
-    redirect("/login");
-  }
-
+  if (!organizationId) redirect("/login");
+  const reportTime = new Date().getTime();
   const [
-    totalEmails,
-    newEmails,
-    urgentEmails,
-    processedEmails,
-    categoryCountsRaw,
-    totalInterventions,
-    pendingInterventions,
-    scheduledInterventions,
-    inProgressInterventions,
-    completedInterventions,
+    total,
+    newCount,
+    processed,
+    urgent,
+    categoryCounts,
+    interventionCounts,
+    recentEmails,
   ] = await Promise.all([
-    prisma.email.count({
-      where: { organizationId },
-    }),
-
-    prisma.email.count({
-      where: { organizationId, status: "NEW" },
-    }),
-
-    prisma.email.count({
-      where: { organizationId, urgency: { gte: 4 } },
-    }),
-
-    prisma.email.count({
-      where: { organizationId, status: "PROCESSED" },
-    }),
-
+    prisma.email.count({ where: { organizationId } }),
+    prisma.email.count({ where: { organizationId, status: "NEW" } }),
+    prisma.email.count({ where: { organizationId, status: "PROCESSED" } }),
+    prisma.email.count({ where: { organizationId, urgency: { gte: 4 } } }),
     prisma.email.groupBy({
       by: ["category"],
       where: { organizationId },
-      _count: { category: true },
+      _count: { _all: true },
     }),
-
-    prisma.intervention.count({
+    prisma.intervention.groupBy({
+      by: ["status"],
       where: { organizationId },
+      _count: { _all: true },
     }),
-
-    prisma.intervention.count({
-      where: { organizationId, status: "PENDING" },
-    }),
-
-    prisma.intervention.count({
-      where: { organizationId, status: "SCHEDULED" },
-    }),
-
-    prisma.intervention.count({
-      where: { organizationId, status: "IN_PROGRESS" },
-    }),
-
-    prisma.intervention.count({
-      where: { organizationId, status: "COMPLETED" },
+    prisma.email.findMany({
+      where: {
+        organizationId,
+        receivedAt: { gte: new Date(reportTime - 7 * 86400000) },
+      },
+      select: { receivedAt: true },
     }),
   ]);
-
-  const categoryCounts = Object.fromEntries(
-    categoryCountsRaw.map((item) => [
-      item.category,
-      item._count.category,
-    ])
-  );
-
-  const interventionStats = [
-    {
-      status: "PENDING",
-      count: pendingInterventions,
-    },
-    {
-      status: "SCHEDULED",
-      count: scheduledInterventions,
-    },
-    {
-      status: "IN_PROGRESS",
-      count: inProgressInterventions,
-    },
-    {
-      status: "COMPLETED",
-      count: completedInterventions,
-    },
-  ];
-
-  const processedRate =
-    totalEmails > 0
-      ? Math.round((processedEmails / totalEmails) * 100)
-      : 0;
-
-  const urgentRate =
-    totalEmails > 0
-      ? Math.round((urgentEmails / totalEmails) * 100)
-      : 0;
-
+  const colors: Record<string, string> = {
+    INCIDENT: "#dc2626",
+    INTERVENTION: "#ea580c",
+    DEMANDE_LOCATAIRE: "#2563eb",
+    CANDIDATURE: "#7c3aed",
+    QUITTANCE: "#0d9488",
+    FACTURE: "#d97706",
+    ADMINISTRATIF: "#6b7280",
+    SPAM: "#9ca3af",
+    URGENT: "#b91c1c",
+  };
+  const categories = Object.keys(EMAIL_CATEGORIES).map((key) => ({
+    label: getCategoryLabel(key),
+    count:
+      categoryCounts.find((item) => item.category === key)?._count._all ?? 0,
+    color: colors[key],
+  }));
+  const unclassified =
+    categoryCounts.find((item) => item.category === null)?._count._all ?? 0;
+  if (unclassified)
+    categories.push({
+      label: "Non classé",
+      count: unclassified,
+      color: "#9ca3af",
+    });
+  const interventions = [
+    "PENDING",
+    "SCHEDULED",
+    "IN_PROGRESS",
+    "COMPLETED",
+  ].map((status, index) => ({
+    label: getInterventionStatusLabel(status),
+    count:
+      interventionCounts.find((item) => item.status === status)?._count._all ??
+      0,
+    color: ["#d97706", "#2563eb", "#ea580c", "#16a34a"][index],
+  }));
+  const formatter = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(reportTime - (6 - index) * 86400000);
+    return {
+      label: new Intl.DateTimeFormat("fr-FR", {
+        weekday: "short",
+        timeZone: "Europe/Paris",
+      }).format(date),
+      count: recentEmails.filter(
+        (email) =>
+          formatter.format(email.receivedAt) === formatter.format(date),
+      ).length,
+    };
+  });
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <DashboardPageHeader
-          title="Statistiques"
-          description="Vue d'ensemble de l'activité emails et interventions."
+    <main className="max-w-5xl px-4 py-6 sm:px-6">
+      <h1 className="mb-6 text-lg font-semibold text-anthracite">
+        Statistiques
+      </h1>
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <DashboardStatCard
+          label="Total emails"
+          value={total}
+          description="Depuis le début"
         />
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <DashboardStatCard
-            label="Emails"
-            value={totalEmails}
-            description="Analysés par l'IA"
-            icon={Mail}
-            accent="indigo"
-          />
-
-          <DashboardStatCard
-            label="Non traités"
-            value={newEmails}
-            description="Encore à traiter"
-            icon={Inbox}
-            accent="orange"
-          />
-
-          <DashboardStatCard
-            label="Urgents"
-            value={urgentEmails}
-            description={`${urgentRate}% des emails`}
-            icon={AlertTriangle}
-            accent="red"
-          />
-
-          <DashboardStatCard
-            label="Interventions"
-            value={totalInterventions}
-            description="Demandes techniques"
-            icon={Wrench}
-            accent="cyan"
-          />
+        <DashboardStatCard
+          label="Nouveaux"
+          value={newCount}
+          description="En attente de traitement"
+          accent="slate"
+        />
+        <DashboardStatCard
+          label="Traités"
+          value={processed}
+          description="Marqués comme traités"
+          accent="slate"
+        />
+        <DashboardStatCard
+          label="Urgences"
+          value={urgent}
+          description="Urgence ≥ 4 sur 5"
+          accent="red"
+        />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
+            Emails reçus — 7 derniers jours
+          </h2>
+          <WeeklyChart days={days} />
         </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <DashboardSectionHeader
-              icon={Mail}
-              title="Emails par catégorie"
-              description="Répartition du volume analysé"
-            />
-
-            <div className="space-y-4 p-6 pt-2">
-              {Object.entries(EMAIL_CATEGORIES).map(([key]) => {
-                const count = categoryCounts[key] ?? 0;
-                const percentage =
-                  totalEmails > 0
-                    ? Math.round((count / totalEmails) * 100)
-                    : 0;
-
-                return (
-                  <div key={key}>
-                    <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryClass(
-                          key
-                        )}`}
-                      >
-                        {getCategoryLabel(key)}
-                      </span>
-
-                      <span className="shrink-0 text-slate-500">
-                        {count} · {percentage}%
-                      </span>
-                    </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          categoryBarColors[key] ?? "bg-indigo-500"
-                        }`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <DashboardSectionHeader
-              icon={Wrench}
-              title="Interventions par statut"
-              description="Suivi opérationnel en cours"
-            />
-
-            <div className="space-y-4 p-6 pt-2">
-              {interventionStats.map((item) => {
-                const percentage =
-                  totalInterventions > 0
-                    ? Math.round((item.count / totalInterventions) * 100)
-                    : 0;
-
-                return (
-                  <div key={item.status}>
-                    <div className="mb-1.5 flex items-center justify-between gap-2 text-sm">
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getInterventionStatusClass(
-                          item.status
-                        )}`}
-                      >
-                        {getInterventionStatusLabel(item.status)}
-                      </span>
-
-                      <span className="shrink-0 text-slate-500">
-                        {item.count} · {percentage}%
-                      </span>
-                    </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          interventionBarColors[item.status] ?? "bg-indigo-500"
-                        }`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <section className="rounded-2xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
+            Répartition par catégorie
+          </h2>
+          <CategoryChart series={categories} />
         </section>
-
-        <section className="grid gap-6 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <DashboardSectionHeader
-              icon={CheckCircle2}
-              title="Traitement emails"
-              description="Part des emails marqués comme traités"
-            />
-
-            <div className="p-6 pt-2">
-              <p className="text-4xl font-bold tracking-tight text-indigo-600">
-                {processedRate}%
-              </p>
-
-              <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
-                <div
-                  className="h-full rounded-full bg-emerald-500 transition-all"
-                  style={{ width: `${processedRate}%` }}
+        <section className="rounded-2xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
+            Emails par catégorie
+          </h2>
+          <DistributionBars series={categories} />
+        </section>
+        <section className="rounded-2xl border border-line bg-white p-5">
+          <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
+            Interventions par statut
+          </h2>
+          <DistributionBars series={interventions} />
+          <div className="mt-5 grid grid-cols-2 gap-3 border-t border-line pt-4">
+            {interventions.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center gap-2 text-xs text-anthracite/70"
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: item.color }}
                 />
+                {item.label}
+                <span className="ml-auto font-bold">{item.count}</span>
               </div>
-
-              <p className="mt-3 text-sm text-slate-500">
-                {processedEmails} emails traités sur {totalEmails}.
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <DashboardSectionHeader
-              icon={BarChart3}
-              title="Lecture métier"
-              description="Indicateurs clés pour votre agence"
-            />
-
-            <div className="space-y-4 p-6 pt-2 text-sm leading-relaxed text-slate-600">
-              <p>
-                Les emails urgents représentent{" "}
-                <strong className="text-slate-900">{urgentRate}%</strong> des
-                messages analysés.
-              </p>
-
-              <p>
-                Les interventions transforment les incidents en suivi technique
-                concret, avec{" "}
-                <strong className="text-slate-900">
-                  {totalInterventions}
-                </strong>{" "}
-                dossiers ouverts au total.
-              </p>
-
-              <p className="rounded-xl bg-indigo-50/60 px-4 py-3 text-indigo-900/80">
-                Cette page évoluera pour mesurer le temps gagné, le volume
-                traité et la réactivité de l&apos;agence.
-              </p>
-            </div>
+            ))}
           </div>
         </section>
       </div>

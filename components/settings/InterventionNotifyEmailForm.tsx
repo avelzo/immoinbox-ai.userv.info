@@ -47,7 +47,7 @@ export function InterventionNotifyEmailForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+      className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm"
     >
       <SettingsSectionHeader
         icon={Bell}
@@ -59,7 +59,7 @@ export function InterventionNotifyEmailForm({
         <div>
           <label
             htmlFor="interventionNotifyEmail"
-            className="text-sm font-medium text-slate-700"
+            className="text-sm font-medium text-anthracite/80"
           >
             Email de notification
           </label>
@@ -71,10 +71,10 @@ export function InterventionNotifyEmailForm({
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="ex: admin@agence.fr"
-            className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            className="mt-2 w-full rounded-xl border border-line px-4 py-2.5 text-sm text-anthracite/80 placeholder:text-anthracite/45 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20"
           />
 
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-anthracite/60">
             Sans adresse renseignée, l&apos;email est enregistré mais
             l&apos;intervention reste à créer manuellement.
           </p>
@@ -83,7 +83,7 @@ export function InterventionNotifyEmailForm({
         <button
           type="submit"
           disabled={loading}
-          className="rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-xl bg-forest px-4 py-2.5 text-sm font-medium text-white transition hover:bg-forest-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>

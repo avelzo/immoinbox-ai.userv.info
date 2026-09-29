@@ -1,321 +1,195 @@
-import { prisma } from "@/lib/prisma";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Prisma } from "@prisma/client";
-import { AlertTriangle, Inbox, Mail } from "lucide-react";
-import { EmailListRow } from "@/components/emails/EmailListRow";
-import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
-import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
-import { DashboardStatCard } from "@/components/dashboard/DashboardStatCard";
-import { EMAIL_CATEGORIES } from "@/lib/email-categories";
-import { filterPillClass } from "@/lib/dashboard-ui";
-import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { EmailCategory, EmailStatus, Prisma } from "@prisma/client";
+import { Inbox } from "lucide-react";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { EmailListRow } from "@/components/emails/EmailListRow";
+import { InboxFilters } from "@/components/emails/InboxFilters";
 
-type EmailsPageProps = {
-  searchParams: Promise<{
-    q?: string;
-    status?: string;
-    category?: string;
-    urgent?: string;
-    sort?: string;
-  }>;
-};
+export const metadata: Metadata = { title: "Boîte de réception" };
 
-function buildUrl(params: Record<string, string | undefined>) {
-  const searchParams = new URLSearchParams();
-
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      searchParams.set(key, value);
-    }
-  });
-
-  const query = searchParams.toString();
-
-  return query ? `/dashboard/emails?${query}` : "/dashboard/emails";
-}
-
-function formatEmailDate(date: Date) {
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "short",
-    timeStyle: "short",
-    timeZone: "Europe/Paris",
-  }).format(date);
-}
-
-export default async function EmailsPage({ searchParams }: EmailsPageProps) {
+export default async function EmailsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const organizationId = await getCurrentUserOrganizationId();
-  if (!organizationId) {
-    redirect("/login");
-  }
+  if (!organizationId) redirect("/login");
   const params = await searchParams;
-  const q = params.q ?? "";
-  const status = params.status;
-  const category = params.category;
-  const urgent = params.urgent;
-  const sort = params.sort ?? "recent";
-
+  const q = typeof params.q === "string" ? params.q : "";
+  const status =
+    typeof params.status === "string" &&
+    Object.values(EmailStatus).includes(params.status as EmailStatus)
+      ? (params.status as EmailStatus)
+      : undefined;
+  const category =
+    typeof params.category === "string" &&
+    Object.values(EmailCategory).includes(params.category as EmailCategory)
+      ? (params.category as EmailCategory)
+      : undefined;
+  const urgent = params.urgent === "true";
+  const sort = typeof params.sort === "string" ? params.sort : "recent";
+  const page = Math.max(
+    1,
+    Math.min(10000, Number.parseInt(String(params.page ?? "1"), 10) || 1),
+  );
   const where: Prisma.EmailWhereInput = {
     organizationId,
-    ...(status ? { status: status as any } : {}),
-
-    ...(category
-      ? {
-          category: category as any,
-        }
-      : {}),
-
-    ...(urgent === "true"
-      ? {
-          urgency: {
-            gte: 4,
-          },
-        }
-      : {}),
-
+    ...(status ? { status } : {}),
+    ...(category ? { category } : {}),
+    ...(urgent ? { urgency: { gte: 4 } } : {}),
     ...(q
       ? {
-          OR: [
-            {
-              subject: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-            {
-              from: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-            {
-              summary: {
-                contains: q,
-                mode: "insensitive",
-              },
-            },
-          ],
+          OR: ["subject", "from", "summary"].map((field) => ({
+            [field]: { contains: q, mode: "insensitive" },
+          })),
         }
       : {}),
   };
-
-  const orderBy =
+  const orderBy: Prisma.EmailOrderByWithRelationInput[] =
     sort === "urgent"
-      ? [{ urgency: "desc" as const }]
+      ? [{ urgency: "desc" }, { receivedAt: "desc" }]
       : sort === "new"
-        ? [{ status: "asc" as const }]
-        : [{ receivedAt: "desc" as const }];
-
-  const [emails, totalCount, newCount, urgentCount, categoryCountsRaw] =
-    await Promise.all([
-      prisma.email.findMany({
-        where,
-        orderBy,
-        take: 50,
-        include: {
-          interventions: true,
-        },
-      }),
-
-      prisma.email.count({
-        where: {
-          organizationId,
-        },
-      }),
-
-      prisma.email.count({
-        where: {
-          organizationId,
-          status: "NEW",
-        },
-      }),
-
-      prisma.email.count({
-        where: {
-          organizationId,
-          urgency: {
-            gte: 4,
-          },
-        },
-      }),
-
-      prisma.email.groupBy({
-        by: ["category"],
-        where: {
-          organizationId,
-        },
-        _count: {
-          category: true,
-        },
-      }),
-    ]);
-
-  const categoryCounts = Object.fromEntries(
-    categoryCountsRaw.map((item) => [item.category, item._count.category])
-  );
-
-  const hasActiveFilters = Boolean(status || category || urgent === "true");
-
+        ? [{ status: "asc" }, { receivedAt: "desc" }]
+        : [{ receivedAt: sort === "oldest" ? "asc" : "desc" }];
+  const [
+    emails,
+    filteredCount,
+    newCount,
+    urgentCount,
+    processedCount,
+    organization,
+  ] = await Promise.all([
+    prisma.email.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * 50,
+      take: 50,
+      include: { interventions: true },
+    }),
+    prisma.email.count({ where }),
+    prisma.email.count({ where: { organizationId, status: "NEW" } }),
+    prisma.email.count({
+      where: { organizationId, status: "NEW", urgency: { gte: 4 } },
+    }),
+    prisma.email.count({ where: { organizationId, status: "PROCESSED" } }),
+    prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { name: true },
+    }),
+  ]);
+  function pageUrl(value: number) {
+    const next = new URLSearchParams({ q, sort, page: String(value) });
+    if (status) next.set("status", status);
+    if (category) next.set("category", category);
+    if (urgent) next.set("urgent", "true");
+    return "/dashboard/emails?" + next.toString();
+  }
+  const date = new Intl.DateTimeFormat("fr-FR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "Europe/Paris",
+  }).format(new Date());
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl">
-        <DashboardPageHeader
-          title={`Emails analysés (${emails.length})`}
-          description="Emails classés automatiquement par l'assistant IA."
-        />
-
-        <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <DashboardStatCard
-            label="Total"
-            value={totalCount}
-            icon={Mail}
-            accent="slate"
-          />
-
-          <DashboardStatCard
-            label="Non traités"
-            value={newCount}
-            icon={Inbox}
-            accent="orange"
-          />
-
-          <DashboardStatCard
-            label="Urgents"
-            value={urgentCount}
-            icon={AlertTriangle}
-            accent="red"
-          />
-        </div>
-
-        <DashboardPanel className="mb-6 space-y-4">
-          <form>
-            <input
-              type="search"
-              name="q"
-              defaultValue={q}
-              placeholder="Rechercher par sujet, expéditeur ou résumé..."
-              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-
-            {status && (
-              <input type="hidden" name="status" value={status} />
-            )}
-
-            {category && (
-              <input type="hidden" name="category" value={category} />
-            )}
-
-            {urgent && <input type="hidden" name="urgent" value={urgent} />}
-
-            <input type="hidden" name="sort" value={sort} />
-          </form>
-
+    <main className="flex min-h-full flex-col">
+      <div className="border-b border-line bg-white px-4 pb-4 pt-6 sm:px-6">
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Filtres
-              </p>
-
-              {hasActiveFilters && (
-                <Link
-                  href="/dashboard/emails"
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                >
-                  Réinitialiser
-                </Link>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/dashboard/emails"
-                className={filterPillClass(
-                  !status && !category && urgent !== "true"
-                )}
-              >
-                Tous
-              </Link>
-
-              <Link
-                href={buildUrl({ q, status: "NEW", sort })}
-                className={filterPillClass(status === "NEW", "orange")}
-              >
-                Non traités
-              </Link>
-
-              <Link
-                href={buildUrl({ q, urgent: "true", sort })}
-                className={filterPillClass(urgent === "true", "red")}
-              >
-                Urgents ({urgentCount ?? 0})
-              </Link>
-
-              {Object.entries(EMAIL_CATEGORIES).map(([key, config]) => (
-                <Link
-                  key={key}
-                  href={buildUrl({ q, category: key, sort })}
-                  className={filterPillClass(
-                    category === key,
-                    config.color
-                  )}
-                >
-                  {config.label} ({categoryCounts[key] ?? 0})
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-slate-100 pt-4">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Trier par
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href={buildUrl({ q, category, status, urgent, sort: "recent" })}
-                className={filterPillClass(sort === "recent")}
-              >
-                Récents
-              </Link>
-
-              <Link
-                href={buildUrl({ q, category, status, urgent, sort: "urgent" })}
-                className={filterPillClass(sort === "urgent", "red")}
-              >
-                Urgents
-              </Link>
-
-              <Link
-                href={buildUrl({ q, category, status, urgent, sort: "new" })}
-                className={filterPillClass(sort === "new", "orange")}
-              >
-                Non traités
-              </Link>
-            </div>
-          </div>
-        </DashboardPanel>
-
-        {emails.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-            <p className="text-lg font-medium text-slate-700">
-              Aucun email trouvé
-            </p>
-
-            <p className="mt-2 text-slate-500">
-              Les nouveaux emails analysés apparaîtront ici.
+            <h1 className="text-lg font-semibold text-anthracite">
+              Boîte de réception
+            </h1>
+            <p className="mt-0.5 text-sm text-anthracite/60">
+              {organization?.name ?? "Votre agence"} — {date}
             </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {emails.map((email) => (
-              <EmailListRow
-                key={email.id}
-                email={email}
-                formattedReceivedAt={formatEmailDate(email.receivedAt)}
-              />
+          <div className="flex items-center gap-4 divide-x divide-line">
+            {[
+              { label: "Nouveaux", value: newCount, color: "text-forest" },
+              { label: "Urgences", value: urgentCount, color: "text-red-600" },
+              {
+                label: "Traités",
+                value: processedCount,
+                color: "text-green-600",
+              },
+            ].map((item) => (
+              <div key={item.label} className="pl-4 text-center first:pl-0">
+                <p className={"text-xl font-bold leading-none " + item.color}>
+                  {item.value}
+                </p>
+                <p className="mt-1 text-[10px] text-anthracite/60">
+                  {item.label}
+                </p>
+              </div>
             ))}
           </div>
-        )}
+        </div>
+        <InboxFilters
+          key={q}
+          q={q}
+          status={status}
+          category={category}
+          urgent={urgent}
+          sort={sort}
+        />
+      </div>
+      <div className="hidden grid-cols-[180px_minmax(0,1fr)_115px_85px_85px_85px] gap-3 border-b border-line bg-ivory px-6 py-2.5 text-[10px] font-semibold uppercase tracking-wide text-anthracite/60 xl:grid">
+        <span>Expéditeur</span>
+        <span>Objet · Résumé IA</span>
+        <span>Catégorie</span>
+        <span>Urgence</span>
+        <span>Statut</span>
+        <span className="text-right">Date</span>
+      </div>
+      {emails.length === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center px-6 py-20 text-center">
+          <Inbox size={40} className="mb-3 text-anthracite/25" />
+          <p className="text-sm font-medium text-anthracite/60">
+            Aucun email correspondant
+          </p>
+          <p className="mt-1 text-xs text-anthracite/50">
+            Modifiez vos filtres ou attendez une nouvelle demande.
+          </p>
+        </div>
+      ) : (
+        <div className="divide-y divide-line">
+          {emails.map((email) => (
+            <EmailListRow
+              key={email.id}
+              email={email}
+              formattedReceivedAt={new Intl.DateTimeFormat("fr-FR", {
+                dateStyle: "short",
+                timeStyle: "short",
+                timeZone: "Europe/Paris",
+              }).format(email.receivedAt)}
+            />
+          ))}
+        </div>
+      )}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line px-6 py-3 text-xs text-anthracite/60">
+        <span>
+          {filteredCount} email{filteredCount > 1 ? "s" : ""} · Page {page} sur{" "}
+          {Math.max(1, Math.ceil(filteredCount / 50))}
+        </span>
+        <div className="flex gap-3">
+          {page > 1 && (
+            <Link
+              className="font-medium text-forest hover:underline"
+              href={pageUrl(page - 1)}
+            >
+              Précédente
+            </Link>
+          )}
+          {page * 50 < filteredCount && (
+            <Link
+              className="font-medium text-forest hover:underline"
+              href={pageUrl(page + 1)}
+            >
+              Suivante
+            </Link>
+          )}
+        </div>
       </div>
     </main>
   );

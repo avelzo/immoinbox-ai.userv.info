@@ -3,17 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export function DeleteMailboxButton({
-  mailboxId,
-}: {
-  mailboxId: string;
-}) {
+export function DeleteMailboxButton({ mailboxId }: { mailboxId: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function deleteMailbox() {
     const confirmed = confirm(
-      "Supprimer cette boîte mail ? Les emails déjà analysés resteront enregistrés."
+      "Supprimer cette boîte mail ? Les emails déjà analysés resteront enregistrés.",
     );
 
     if (!confirmed) return;

@@ -1,117 +1,73 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-import type { Email, EmailStatus, Intervention } from "@prisma/client";
-import { EmailStatusButton } from "@/components/EmailStatusButton";
-import { CreateInterventionButton } from "@/components/CreateInterventionButton";
+import type { Email, Intervention } from "@prisma/client";
 import {
   getCategoryLabel,
   getCategoryClass,
-  getUrgencyLabel,
-  getUrgencyClass,
   getStatusLabel,
   getStatusClass,
+  getUrgencyLabel,
 } from "@/lib/email-ui";
-
-type EmailListRowProps = {
-  email: Email & {
-    interventions: Intervention[];
-  };
-  formattedReceivedAt: string;
-};
-
-function stopRowNavigation(event: React.MouseEvent) {
-  event.stopPropagation();
-}
 
 export function EmailListRow({
   email,
   formattedReceivedAt,
-}: EmailListRowProps) {
-  const router = useRouter();
-  const isProcessed = email.status === "PROCESSED";
-
+}: {
+  email: Email & { interventions: Intervention[] };
+  formattedReceivedAt: string;
+}) {
+  const urgent = (email.urgency ?? 0) >= 4;
+  const isNew = email.status === "NEW";
   return (
-    <article
-      onClick={() => router.push(`/dashboard/emails/${email.id}`)}
-      className={`group cursor-pointer rounded-xl border bg-white px-4 py-4 shadow-sm transition sm:px-5 ${
-        isProcessed
-          ? "border-slate-200/80 bg-slate-50/50 hover:border-slate-300 hover:shadow-md"
-          : "border-slate-200/80 hover:border-indigo-200 hover:shadow-md"
-      }`}
+    <Link
+      href={`/dashboard/emails/${email.id}`}
+      className={`group grid grid-cols-2 gap-x-3 gap-y-2 px-4 py-3.5 transition-colors hover:bg-sage/30 sm:px-6 xl:grid-cols-[180px_minmax(0,1fr)_115px_85px_85px_85px] xl:items-center ${urgent && isNew ? "bg-red-50/40" : "bg-white"}`}
     >
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
-            <time>{formattedReceivedAt}</time>
-            <span aria-hidden="true">·</span>
-            <span className="truncate">{email.from}</span>
-          </div>
-
-          <h3
-            className={`mt-1.5 font-semibold leading-snug text-slate-900 ${
-              isProcessed ? "opacity-80" : ""
-            }`}
-          >
-            {email.subject}
-          </h3>
-
-          <p className="mt-1 line-clamp-2 text-sm text-slate-600">
-            {email.summary ?? "Aucun résumé"}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getCategoryClass(
-                email.category
-              )}`}
-            >
-              {getCategoryLabel(email.category)}
-            </span>
-
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getUrgencyClass(
-                email.urgency
-              )}`}
-            >
-              {getUrgencyLabel(email.urgency)}
-            </span>
-
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusClass(
-                email.status
-              )}`}
-            >
-              {getStatusLabel(email.status)}
-            </span>
-          </div>
-        </div>
-
-        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-indigo-400" />
-      </div>
-
-      <div
-        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3"
-        onClick={stopRowNavigation}
-      >
-        {email.interventions.length > 0 ? (
-          <Link
-            href={`/dashboard/interventions/${email.interventions[0].id}`}
-            className="rounded-lg bg-cyan-50 px-3 py-1.5 text-xs font-medium text-cyan-700 ring-1 ring-cyan-200/80 transition hover:bg-cyan-100"
-          >
-            Voir intervention
-          </Link>
-        ) : email.category === "INCIDENT" ? (
-          <CreateInterventionButton emailId={email.id} size="sm" />
-        ) : null}
-
-        <EmailStatusButton
-          emailId={email.id}
-          initialStatus={email.status as EmailStatus}
+      <div className="col-span-2 flex min-w-0 items-center gap-2 xl:col-span-1">
+        <span
+          aria-hidden
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${isNew ? "bg-forest" : "bg-transparent"}`}
         />
+        <span
+          className={`truncate text-xs ${isNew ? "font-semibold text-anthracite" : "text-anthracite/70"}`}
+        >
+          {email.from}
+        </span>
       </div>
-    </article>
+      <div className="col-span-2 min-w-0 xl:col-span-1">
+        <h2
+          className={`truncate text-sm ${isNew ? "font-semibold text-anthracite" : "font-medium text-anthracite/80"}`}
+        >
+          {email.subject}
+        </h2>
+        <p className="mt-0.5 truncate text-xs text-anthracite/60">
+          {email.summary ?? "Analyse en attente"}
+        </p>
+      </div>
+      <span
+        className={`w-fit rounded-md px-2 py-0.5 text-[10px] font-medium ${getCategoryClass(email.category)}`}
+      >
+        {getCategoryLabel(email.category)}
+      </span>
+      <span
+        className={`flex items-center gap-1.5 text-[11px] font-medium ${urgent ? "text-red-600" : "text-anthracite/60"}`}
+      >
+        <span
+          aria-hidden
+          className={`h-1.5 w-1.5 rounded-full ${urgent ? "bg-red-500" : email.urgency === 3 ? "bg-amber-500" : "bg-sage-dark"}`}
+        />
+        {getUrgencyLabel(email.urgency)}
+      </span>
+      <span
+        className={`w-fit rounded-md px-2 py-0.5 text-[10px] font-medium ${getStatusClass(email.status)}`}
+      >
+        {getStatusLabel(email.status)}
+      </span>
+      <time
+        dateTime={email.receivedAt.toISOString()}
+        className="text-[11px] text-anthracite/50 xl:text-right"
+      >
+        {formattedReceivedAt}
+      </time>
+    </Link>
   );
 }

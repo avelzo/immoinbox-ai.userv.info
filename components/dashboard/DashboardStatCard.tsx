@@ -2,17 +2,14 @@ import type { LucideIcon } from "lucide-react";
 
 type Accent = "indigo" | "slate" | "orange" | "red" | "emerald" | "cyan";
 
-const accentStyles: Record<
-  Accent,
-  { icon: string; value: string }
-> = {
+const accentStyles: Record<Accent, { icon: string; value: string }> = {
   indigo: {
-    icon: "bg-indigo-50 text-indigo-600",
-    value: "text-indigo-600",
+    icon: "bg-sage/30 text-forest",
+    value: "text-forest",
   },
   slate: {
-    icon: "bg-slate-100 text-slate-600",
-    value: "text-slate-900",
+    icon: "bg-sage/30 text-anthracite/70",
+    value: "text-anthracite",
   },
   orange: {
     icon: "bg-orange-50 text-orange-600",
@@ -50,9 +47,11 @@ export function DashboardStatCard({
   const styles = accentStyles[accent];
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-indigo-100 hover:shadow-md">
+    <div className="rounded-2xl border border-line bg-white p-4 transition hover:border-sage ">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-anthracite/60">
+          {label}
+        </p>
 
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
@@ -68,7 +67,7 @@ export function DashboardStatCard({
       </p>
 
       {description && (
-        <p className="mt-1.5 text-sm text-slate-500">{description}</p>
+        <p className="mt-1.5 text-xs text-anthracite/60">{description}</p>
       )}
     </div>
   );

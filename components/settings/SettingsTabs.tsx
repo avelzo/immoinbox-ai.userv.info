@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   Building2,
   ChevronDown,
@@ -44,29 +43,9 @@ type SettingsTabsProps = {
   n8nApiBaseUrl: string;
 };
 
-const tabs = [
-  {
-    id: "agency",
-    label: "Agence",
-    icon: Building2,
-  },
-  {
-    id: "mailboxes",
-    label: "Boîtes mail",
-    icon: Mail,
-  },
-  {
-    id: "integrations",
-    label: "Intégrations",
-    icon: Plug,
-  },
-] as const;
-
-type TabId = (typeof tabs)[number]["id"];
-
 function SettingsPanel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
       {children}
     </div>
   );
@@ -89,53 +68,23 @@ export function SettingsTabs({
   mailboxes,
   n8nApiBaseUrl,
 }: SettingsTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("agency");
-
   return (
-    <div className="space-y-6">
-      <div className="border-b border-slate-200">
-        <nav className="-mb-px flex gap-1 overflow-x-auto">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={
-                  isActive
-                    ? "flex items-center gap-2 border-b-2 border-indigo-600 px-4 py-3 text-sm font-medium text-indigo-600"
-                    : "flex items-center gap-2 border-b-2 border-transparent px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-                }
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {activeTab === "agency" && (
+    <div className="space-y-4">
+      <>
         <div className="space-y-6">
           <SettingsPanel>
             <SettingsSectionHeader
               icon={Building2}
-              title="Organisation"
-              description="Informations de votre agence. Certains identifiants techniques sont affichés en lecture seule."
+              title="Identité de l’agence"
+              description="Informations de votre agence."
             />
 
             <div className="grid gap-6 p-6 md:grid-cols-2">
-              <SettingsField label="Nom de l'agence" value={organization.name} />
-
               <SettingsField
-                label="ID organisation"
-                value={organization.id}
-                mono
-                readOnly
+                label="Nom de l'agence"
+                value={organization.name}
               />
+
             </div>
           </SettingsPanel>
 
@@ -143,19 +92,19 @@ export function SettingsTabs({
             initialEmail={organization.interventionNotifyEmail}
           />
         </div>
-      )}
+      </>
 
-      {activeTab === "mailboxes" && (
+      <>
         <div className="space-y-6">
           <SettingsPanel>
             <SettingsSectionHeader
               icon={Mail}
               title="Boîtes mail connectées"
-              description="Surveillez l'état de vos connexions IMAP et testez-les à tout moment."
+              description="Testez vos connexions IMAP et consultez le résultat du dernier test."
             />
 
             {mailboxes.length === 0 ? (
-              <p className="px-6 pb-6 text-sm text-slate-500">
+              <p className="px-6 pb-6 text-sm text-anthracite/60">
                 Aucune boîte mail connectée pour le moment.
               </p>
             ) : (
@@ -169,20 +118,20 @@ export function SettingsTabs({
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold text-slate-900">
+                            <p className="font-semibold text-anthracite">
                               {mailbox.email}
                             </p>
 
                             {isConnected ? (
                               <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200/80">
-                                Connectée
+                                Dernier test réussi
                               </span>
                             ) : hasError ? (
                               <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-red-200/80">
                                 Erreur
                               </span>
                             ) : (
-                              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                              <span className="rounded-full bg-sage/30 px-2.5 py-0.5 text-xs font-medium text-anthracite/70">
                                 Non testée
                               </span>
                             )}
@@ -190,30 +139,34 @@ export function SettingsTabs({
 
                           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                             <div>
-                              <dt className="text-slate-500">Provider</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-anthracite/60">Provider</dt>
+                              <dd className="mt-0.5 font-medium text-anthracite/80">
                                 {mailbox.provider}
                               </dd>
                             </div>
 
                             <div>
-                              <dt className="text-slate-500">IMAP</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-anthracite/60">IMAP</dt>
+                              <dd className="mt-0.5 font-medium text-anthracite/80">
                                 {mailbox.imapHost ?? "Non configuré"}:
                                 {mailbox.imapPort ?? "—"}
                               </dd>
                             </div>
 
                             <div>
-                              <dt className="text-slate-500">Utilisateur</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-anthracite/60">
+                                Utilisateur
+                              </dt>
+                              <dd className="mt-0.5 font-medium text-anthracite/80">
                                 {mailbox.imapUsername ?? "Non configuré"}
                               </dd>
                             </div>
 
                             <div>
-                              <dt className="text-slate-500">Dernier test</dt>
-                              <dd className="mt-0.5 font-medium text-slate-800">
+                              <dt className="text-anthracite/60">
+                                Dernier test
+                              </dt>
+                              <dd className="mt-0.5 font-medium text-anthracite/80">
                                 {formatDate(mailbox.lastTestedAt)}
                               </dd>
                             </div>
@@ -226,17 +179,17 @@ export function SettingsTabs({
                           )}
 
                           <details className="group mt-4">
-                            <summary className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-slate-700">
+                            <summary className="flex cursor-pointer items-center gap-1.5 text-sm font-medium text-anthracite/80">
                               <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
                               Configuration n8n pour cette boîte
                             </summary>
 
                             <div className="mt-3 space-y-2">
-                              <code className="block break-all rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 ring-1 ring-slate-200/80">
+                              <code className="block break-all rounded-lg bg-ivory px-3 py-2 font-mono text-xs text-anthracite/80 ring-1 ring-slate-200/80">
                                 {n8nApiBaseUrl}/api/n8n/mailboxes/{mailbox.id}
                               </code>
 
-                              <code className="block break-all rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-700 ring-1 ring-slate-200/80">
+                              <code className="block break-all rounded-lg bg-ivory px-3 py-2 font-mono text-xs text-anthracite/80 ring-1 ring-slate-200/80">
                                 {n8nApiBaseUrl}/api/analyze-email
                               </code>
                             </div>
@@ -256,7 +209,7 @@ export function SettingsTabs({
 
                           <Link
                             href={`/dashboard/settings/mailboxes/${mailbox.id}`}
-                            className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
+                            className="rounded-xl border border-line px-3 py-2 text-sm font-medium text-anthracite/80 transition hover:border-sage-dark hover:bg-sage/30 hover:text-forest"
                           >
                             Modifier
                           </Link>
@@ -273,23 +226,28 @@ export function SettingsTabs({
 
           <MailboxForm />
         </div>
-      )}
+      </>
 
-      {activeTab === "integrations" && (
+      <details className="rounded-2xl border border-line bg-white p-5">
+        <summary className="mb-4 flex list-none items-center gap-2 text-sm font-semibold text-anthracite">
+          <Plug size={14} />
+          Intégration n8n — paramètres avancés
+          <ChevronDown size={12} />
+        </summary>
         <div className="space-y-6">
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5">
-            <p className="text-sm font-medium text-indigo-950">
+          <div className="rounded-2xl border border-sage bg-sage/30 p-5">
+            <p className="text-sm font-medium text-forest-dark">
               Besoin d&apos;aide pour connecter n8n ?
             </p>
 
-            <p className="mt-1 text-sm text-indigo-900/80">
+            <p className="mt-1 text-sm text-forest-dark/80">
               Consultez le guide pas à pas pour configurer le workflow
               d&apos;analyse des emails.
             </p>
 
             <Link
               href="/dashboard/settings/guide"
-              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-700 hover:text-indigo-900"
+              className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-forest hover:text-forest-dark"
             >
               Ouvrir le guide d&apos;installation
               <ExternalLink className="h-3.5 w-3.5" />
@@ -330,14 +288,14 @@ export function SettingsTabs({
             </div>
           </SettingsPanel>
         </div>
-      )}
+      </details>
 
-      <div className="flex items-center gap-3 rounded-xl border border-slate-200/60 bg-slate-50/80 px-4 py-3 text-sm text-slate-500">
-        <User className="h-4 w-4 shrink-0 text-slate-400" />
+      <div className="flex items-center gap-3 rounded-xl border border-line bg-ivory px-4 py-3 text-sm text-anthracite/60">
+        <User className="h-4 w-4 shrink-0 text-anthracite/45" />
 
         <p>
           Connecté en tant que{" "}
-          <span className="font-medium text-slate-700">{user.email}</span>
+          <span className="font-medium text-anthracite/80">{user.email}</span>
           {user.name ? (
             <>
               {" "}

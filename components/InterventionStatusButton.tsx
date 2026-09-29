@@ -1,27 +1,13 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { StatusSelect } from "./StatusSelect";
 import { getInterventionStatusLabel } from "@/lib/intervention-ui";
 
-type InterventionStatus =
-  | "PENDING"
-  | "SCHEDULED"
-  | "IN_PROGRESS"
-  | "COMPLETED";
-
-const statusOrder: InterventionStatus[] = [
+type InterventionStatus = "PENDING" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED";
+const statuses: InterventionStatus[] = [
   "PENDING",
   "SCHEDULED",
   "IN_PROGRESS",
   "COMPLETED",
 ];
-
-function getNextStatus(status: InterventionStatus): InterventionStatus {
-  const index = statusOrder.indexOf(status);
-
-  return statusOrder[Math.min(index + 1, statusOrder.length - 1)];
-}
 
 export function InterventionStatusButton({
   interventionId,
@@ -30,59 +16,16 @@ export function InterventionStatusButton({
   interventionId: string;
   initialStatus: InterventionStatus;
 }) {
-  const router = useRouter();
-  const [status, setStatus] =
-    useState<InterventionStatus>(initialStatus);
-  const [loading, setLoading] = useState(false);
-
-  const nextStatus = getNextStatus(status);
-  const isCompleted = status === "COMPLETED";
-
-  async function updateStatus() {
-    if (isCompleted) return;
-
-    setLoading(true);
-
-    try {
-      const response = await fetch(
-        `/api/interventions/${interventionId}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            status: nextStatus,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Erreur mise à jour intervention");
-      }
-
-      setStatus(nextStatus);
-      router.refresh();
-    } catch (error) {
-      console.error(error);
-      alert("Impossible de mettre à jour le statut.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <button
-      type="button"
-      onClick={updateStatus}
-      disabled={loading || isCompleted}
-      className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-    >
-      {loading
-        ? "..."
-        : isCompleted
-        ? "Terminée"
-        : `→ ${getInterventionStatusLabel(nextStatus)}`}
-    </button>
+    <StatusSelect
+      key={interventionId + initialStatus}
+      endpoint={`/api/interventions/${interventionId}/status`}
+      initialStatus={initialStatus}
+      label="Modifier le statut de l’intervention"
+      options={statuses.map((value) => ({
+        value,
+        label: getInterventionStatusLabel(value),
+      }))}
+    />
   );
 }

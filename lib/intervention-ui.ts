@@ -10,7 +10,7 @@ export function getInterventionStatusLabel(status: string) {
 }
 
 export function formatInterventionForApi<T extends { status: string }>(
-  intervention: T
+  intervention: T,
 ) {
   return {
     ...intervention,
@@ -26,5 +26,5 @@ export function getInterventionStatusClass(status: string) {
     COMPLETED: "bg-emerald-100 text-emerald-700",
   };
 
-  return classes[status] ?? "bg-slate-100 text-slate-700";
+  return classes[status] ?? "bg-sage/30 text-anthracite/80";
 }

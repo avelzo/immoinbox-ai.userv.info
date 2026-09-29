@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -23,8 +24,8 @@ export default async function InterventionDetailPage({ params }: PageProps) {
   }
   const intervention = await prisma.intervention.findFirst({
     where: {
-        id,
-        organizationId,
+      id,
+      organizationId,
     },
     include: {
       incidentEmail: true,
@@ -36,23 +37,23 @@ export default async function InterventionDetailPage({ params }: PageProps) {
   }
 
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <main className="px-4 py-6 sm:px-6">
+      <div className="max-w-5xl space-y-6">
         <div className="rounded-2xl border bg-white p-6 shadow-sm">
           <Link
             href="/dashboard/interventions"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            className="text-sm font-medium text-anthracite/70 hover:text-anthracite"
           >
             ← Retour aux interventions
           </Link>
 
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900">
+              <h1 className="text-lg font-semibold text-anthracite">
                 {intervention.title}
               </h1>
 
-              <p className="mt-2 text-slate-600">
+              <p className="mt-2 text-anthracite/70">
                 Créée le{" "}
                 {new Intl.DateTimeFormat("fr-FR", {
                   dateStyle: "full",
@@ -64,42 +65,42 @@ export default async function InterventionDetailPage({ params }: PageProps) {
 
             <span
               className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getInterventionStatusClass(
-                intervention.status
+                intervention.status,
               )}`}
             >
               {getInterventionStatusLabel(intervention.status)}
             </span>
             <InterventionStatusButton
-                interventionId={intervention.id}
-                initialStatus={intervention.status}
+              interventionId={intervention.id}
+              initialStatus={intervention.status}
             />
           </div>
         </div>
 
         <section className="rounded-2xl border bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-sm font-semibold text-anthracite">
             Informations
           </h2>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
-              <p className="text-sm text-slate-500">Technicien</p>
-              <p className="mt-1 font-medium text-slate-900">
+              <p className="text-sm text-anthracite/60">Technicien</p>
+              <p className="mt-1 font-medium text-anthracite">
                 {intervention.technicianName ?? "Non assigné"}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">Statut</p>
-              <p className="mt-1 font-medium text-slate-900">
+              <p className="text-sm text-anthracite/60">Statut</p>
+              <p className="mt-1 font-medium text-anthracite">
                 {getInterventionStatusLabel(intervention.status)}
               </p>
             </div>
           </div>
 
           <div className="mt-6">
-            <p className="text-sm text-slate-500">Description</p>
-            <p className="mt-2 whitespace-pre-wrap text-slate-800">
+            <p className="text-sm text-anthracite/60">Description</p>
+            <p className="mt-2 whitespace-pre-wrap text-anthracite/80">
               {intervention.description ?? "Aucune description."}
             </p>
           </div>
@@ -107,26 +108,24 @@ export default async function InterventionDetailPage({ params }: PageProps) {
 
         {intervention.incidentEmail && (
           <section className="rounded-2xl border bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">
-              Email lié
-            </h2>
+            <h2 className="text-sm font-semibold text-anthracite">Email lié</h2>
 
-            <div className="mt-4 rounded-xl bg-slate-100 p-4">
-              <p className="font-medium text-slate-900">
+            <div className="mt-4 rounded-xl bg-sage/30 p-4">
+              <p className="font-medium text-anthracite">
                 {intervention.incidentEmail.subject}
               </p>
 
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-anthracite/70">
                 De : {intervention.incidentEmail.from}
               </p>
 
-              <p className="mt-4 whitespace-pre-wrap text-slate-700">
+              <p className="mt-4 whitespace-pre-wrap text-anthracite/80">
                 {intervention.incidentEmail.textContent}
               </p>
 
               <Link
                 href={`/dashboard/emails/${intervention.incidentEmail.id}`}
-                className="mt-4 inline-flex text-sm font-medium text-slate-900 hover:underline"
+                className="mt-4 inline-flex text-sm font-medium text-anthracite hover:underline"
               >
                 Voir l’email complet →
               </Link>
@@ -137,3 +136,6 @@ export default async function InterventionDetailPage({ params }: PageProps) {
     </main>
   );
 }
+export const metadata: Metadata = {
+  title: "Détail de l’intervention",
+};

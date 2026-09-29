@@ -69,7 +69,7 @@ Endpoint config mailbox (optionnel) :
     <button
       type="button"
       onClick={copyConfig}
-      className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+      className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-anthracite/80 hover:bg-sage/30"
     >
       {copied ? "Copié !" : "Copier config n8n"}
     </button>

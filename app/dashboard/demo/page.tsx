@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -81,23 +82,26 @@ export default async function DemoGuidePage() {
     }),
   ]);
 
-  const categoryCounts = Object.fromEntries(
-    categoryCountsRaw.map((item) => [item.category, item._count.category])
+  const categoryCounts: Record<string, number> = Object.fromEntries(
+    categoryCountsRaw.map((item) => [
+      item.category ?? "UNCLASSIFIED",
+      item._count.category,
+    ]),
   );
 
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <main className="px-4 py-6 sm:px-6">
+      <div className="max-w-5xl space-y-8">
         <DashboardPageHeader
           title="Guide démo"
           description="Scénario cohérent pour présenter ImmoInbox AI aux agences immobilières."
         />
 
-        <DashboardPanel className="border-indigo-100 bg-indigo-50/40">
-          <p className="text-sm font-medium text-indigo-950">
+        <DashboardPanel className="border-sage bg-sage/30">
+          <p className="text-sm font-medium text-forest-dark">
             Scénario en une phrase
           </p>
-          <p className="mt-2 text-sm leading-relaxed text-indigo-900/90">
+          <p className="mt-2 text-sm leading-relaxed text-forest-dark/90">
             Une agence brestoise reçoit chaque jour des emails de locataires,
             propriétaires et artisans. L&apos;IA classe, résume et priorise —
             l&apos;équipe traite les urgences en premier et suit les
@@ -136,7 +140,7 @@ export default async function DemoGuidePage() {
           />
         </section>
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
           <DashboardSectionHeader
             icon={Presentation}
             title="Panel de données seedées"
@@ -145,14 +149,14 @@ export default async function DemoGuidePage() {
 
           <div className="grid gap-6 p-6 lg:grid-cols-2">
             <div>
-              <p className="mb-3 text-sm font-semibold text-slate-900">
+              <p className="mb-3 text-sm font-semibold text-anthracite">
                 Emails par catégorie
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-anthracite/70">
                 {Object.entries(categoryCounts).length === 0 ? (
-                  <li className="text-slate-500">
+                  <li className="text-anthracite/60">
                     Aucune donnée — lancez{" "}
-                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+                    <code className="rounded bg-sage/30 px-1.5 py-0.5 text-xs">
                       npm run seed:demo
                     </code>
                   </li>
@@ -160,7 +164,9 @@ export default async function DemoGuidePage() {
                   Object.entries(categoryCounts).map(([key, count]) => (
                     <li key={key} className="flex justify-between gap-4">
                       <span>{getCategoryLabel(key)}</span>
-                      <span className="font-medium text-slate-900">{count}</span>
+                      <span className="font-medium text-anthracite">
+                        {count}
+                      </span>
                     </li>
                   ))
                 )}
@@ -168,16 +174,16 @@ export default async function DemoGuidePage() {
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-semibold text-slate-900">
+              <p className="mb-3 text-sm font-semibold text-anthracite">
                 Interventions par statut
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
+              <ul className="space-y-2 text-sm text-anthracite/70">
                 <li className="flex justify-between gap-4">
                   <span className="inline-flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5 text-orange-500" />
                     En attente
                   </span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-anthracite">
                     {pendingInterventions}
                   </span>
                 </li>
@@ -186,7 +192,7 @@ export default async function DemoGuidePage() {
                     <PlayCircle className="h-3.5 w-3.5 text-cyan-500" />
                     Planifiées / en cours
                   </span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-anthracite">
                     {scheduledInterventions + inProgressInterventions}
                   </span>
                 </li>
@@ -195,7 +201,7 @@ export default async function DemoGuidePage() {
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     Terminées
                   </span>
-                  <span className="font-medium text-slate-900">
+                  <span className="font-medium text-anthracite">
                     {completedInterventions}
                   </span>
                 </li>
@@ -204,22 +210,22 @@ export default async function DemoGuidePage() {
           </div>
 
           {recentEmails.length > 0 && (
-            <div className="border-t border-slate-100 px-6 py-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <div className="border-t border-line px-6 py-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-anthracite/60">
                 Exemples récents (seed)
               </p>
               <ul className="space-y-2 text-sm">
                 {recentEmails.map((email) => (
                   <li
                     key={email.subject}
-                    className="flex flex-wrap items-center gap-2 text-slate-700"
+                    className="flex flex-wrap items-center gap-2 text-anthracite/80"
                   >
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-anthracite">
                       {email.subject}
                     </span>
-                    <span className="text-slate-400">·</span>
+                    <span className="text-anthracite/45">·</span>
                     <span>{getCategoryLabel(email.category)}</span>
-                    <span className="text-slate-400">·</span>
+                    <span className="text-anthracite/45">·</span>
                     <span>urgence {email.urgency}/5</span>
                     {email.status === "PROCESSED" && (
                       <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
@@ -235,12 +241,12 @@ export default async function DemoGuidePage() {
 
         <div className="space-y-4">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+            <h2 className="text-lg font-semibold text-anthracite">
               Emails à envoyer en live
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-anthracite/70">
               Envoyez ces messages à{" "}
-              <strong className="text-slate-900">{DEMO_MAILBOX_EMAIL}</strong>{" "}
+              <strong className="text-anthracite">{DEMO_MAILBOX_EMAIL}</strong>{" "}
               pendant la démo. n8n les analysera en temps réel via OpenAI.
             </p>
           </div>
@@ -259,26 +265,26 @@ export default async function DemoGuidePage() {
         </div>
 
         <DashboardPanel>
-          <p className="text-sm font-semibold text-slate-900">
+          <p className="text-sm font-semibold text-anthracite">
             Réinitialiser les données démo
           </p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-anthracite/70">
             Supprime tous les emails et interventions de l&apos;organisation,
             puis recrée 20 emails (3 traités) et 7 interventions.
           </p>
-          <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-950 px-4 py-3 text-sm text-slate-100">
+          <pre className="mt-4 overflow-x-auto rounded-xl bg-forest-dark px-4 py-3 text-sm text-slate-100">
             npm run seed:demo
           </pre>
-          <p className="mt-3 text-sm text-slate-500">
+          <p className="mt-3 text-sm text-anthracite/60">
             Doc complète :{" "}
             <Link
               href="/dashboard/settings/guide"
-              className="font-medium text-indigo-600 hover:text-indigo-800"
+              className="font-medium text-forest hover:text-forest"
             >
               guide n8n
             </Link>{" "}
             · fichier{" "}
-            <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">
+            <code className="rounded bg-sage/30 px-1.5 py-0.5 text-xs">
               docs/DEMO.md
             </code>
           </p>
@@ -287,3 +293,6 @@ export default async function DemoGuidePage() {
     </main>
   );
 }
+export const metadata: Metadata = {
+  title: "Guide de démonstration",
+};

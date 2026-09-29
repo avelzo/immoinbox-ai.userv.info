@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f8f5;
+  --foreground: #202b28;
 }
 
 @theme inline {
@@ -10,17 +10,54 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-forest: #143d36;
+  --color-forest-hover: #1c5248;
+  --color-forest-dark: #0d2820;
+  --color-ivory: #f7f8f5;
+  --color-sage: #dce8e0;
+  --color-sage-dark: #c4d8cc;
+  --color-anthracite: #202b28;
+  --color-line: #e8ede9;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+button,
+summary,
+select {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+:focus-visible {
+  outline: 2px solid #2a6b5e;
+  outline-offset: 3px;
+}
+input,
+textarea,
+select {
+  min-width: 0;
+}
+input:not([type="checkbox"]),
+textarea,
+select {
+  border-color: #e8ede9;
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #2a6b5e;
+}
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4d8cc;
+  border-radius: 3px;
 }

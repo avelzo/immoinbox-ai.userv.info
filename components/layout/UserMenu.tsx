@@ -16,24 +16,22 @@ export function UserMenu({ email }: { email: string }) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
+      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-forest text-sm font-semibold text-white">
         {initial}
       </div>
 
       <div className="hidden text-right sm:block">
-        <p className="max-w-48 truncate text-sm font-medium text-slate-900">
+        <p className="max-w-48 truncate text-sm font-medium text-anthracite">
           {email}
         </p>
 
-        <p className="text-xs text-slate-500">
-          Connecté
-        </p>
+        <p className="text-xs text-anthracite/60">Connecté</p>
       </div>
 
       <button
         type="button"
         onClick={logout}
-        className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+        className="rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-anthracite/80 hover:bg-sage/30"
       >
         Déconnexion
       </button>

@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 /backups/
+/immo_figma.zip
 
 # debug
 npm-debug.log*

@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 
 import { getSession } from "@/lib/auth-server";
-import { Sidebar } from "@/components/dashboard/Sidebar";
-import { UserMenu } from "@/components/layout/UserMenu";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { getCurrentUserOrganizationId } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
 
 export default async function DashboardLayout({
   children,
@@ -15,19 +16,32 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const organizationId = await getCurrentUserOrganizationId();
+  if (!organizationId) redirect("/login");
+  const [organization, newCount, urgentCount, interventionCount] =
+    await Promise.all([
+      prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true },
+      }),
+      prisma.email.count({ where: { organizationId, status: "NEW" } }),
+      prisma.email.count({
+        where: { organizationId, status: "NEW", urgency: { gte: 4 } },
+      }),
+      prisma.intervention.count({
+        where: { organizationId, status: { in: ["PENDING", "IN_PROGRESS"] } },
+      }),
+    ]);
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-
-      <div className="min-w-0 flex-1 md:ml-64">
-        <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
-          <div className="flex items-center justify-end px-6 py-4">
-            <UserMenu email={session.user.email} />
-          </div>
-        </header>
-
-        {children}
-      </div>
-    </div>
+    <DashboardShell
+      organizationName={organization?.name ?? "Votre agence"}
+      email={session.user.email}
+      name={session.user.name ?? null}
+      newCount={newCount}
+      urgentCount={urgentCount}
+      interventionCount={interventionCount}
+    >
+      {children}
+    </DashboardShell>
   );
 }

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -31,11 +32,11 @@ export default async function EditMailboxPage({ params }: PageProps) {
   }
 
   return (
-    <main className="p-6">
+    <main className="px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-3xl space-y-6">
         <Link
           href="/dashboard/settings"
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="text-sm font-medium text-anthracite/70 hover:text-anthracite"
         >
           ← Retour aux paramètres
         </Link>
@@ -45,3 +46,6 @@ export default async function EditMailboxPage({ params }: PageProps) {
     </main>
   );
 }
+export const metadata: Metadata = {
+  title: "Configuration de la boîte mail",
+};

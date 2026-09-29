@@ -10,13 +10,13 @@ export function DashboardPageHeader({
   action,
 }: DashboardPageHeaderProps) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-lg font-semibold tracking-tight text-anthracite">
           {title}
         </h1>
 
-        <p className="mt-2 text-slate-600">{description}</p>
+        <p className="mt-1 text-sm text-anthracite/60">{description}</p>
       </div>
 
       {action}

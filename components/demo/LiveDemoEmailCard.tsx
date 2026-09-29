@@ -30,17 +30,17 @@ export function LiveDemoEmailCard({
   const fullEmail = `Subject: ${subject}\n\n${body}`;
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-line bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-slate-900">{label}</p>
-          <p className="mt-1 text-xs text-indigo-700">{expected}</p>
+          <p className="font-semibold text-anthracite">{label}</p>
+          <p className="mt-1 text-xs text-forest">{expected}</p>
         </div>
 
         <button
           type="button"
           onClick={() => copyText("full", fullEmail)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-indigo-700"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-forest px-3 py-1.5 text-xs font-medium text-white transition hover:bg-forest-hover"
         >
           <Copy className="h-3.5 w-3.5" />
           {copiedField === "full" ? "Copié !" : "Copier l'email"}
@@ -50,38 +50,38 @@ export function LiveDemoEmailCard({
       <div className="mt-4 space-y-3">
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-anthracite/60">
               Objet
             </p>
 
             <button
               type="button"
               onClick={() => copyText("subject", subject)}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              className="text-xs font-medium text-forest hover:text-forest"
             >
               {copiedField === "subject" ? "Copié" : "Copier"}
             </button>
           </div>
 
-          <p className="mt-1 text-sm font-medium text-slate-900">{subject}</p>
+          <p className="mt-1 text-sm font-medium text-anthracite">{subject}</p>
         </div>
 
         <div>
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wide text-anthracite/60">
               Corps
             </p>
 
             <button
               type="button"
               onClick={() => copyText("body", body)}
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              className="text-xs font-medium text-forest hover:text-forest"
             >
               {copiedField === "body" ? "Copié" : "Copier"}
             </button>
           </div>
 
-          <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-700 ring-1 ring-slate-200/80">
+          <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-ivory px-3 py-2.5 text-sm text-anthracite/80 ring-1 ring-slate-200/80">
             {body}
           </pre>
         </div>

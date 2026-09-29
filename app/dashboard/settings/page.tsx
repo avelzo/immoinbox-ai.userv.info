@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth-server";
@@ -23,13 +24,13 @@ export default async function SettingsPage() {
 
   if (!organization) {
     return (
-      <main className="p-6">
-        <div className="mx-auto max-w-5xl rounded-2xl border border-dashed bg-white p-12 text-center">
-          <p className="text-lg font-medium text-slate-700">
+      <main className="px-4 py-6 sm:px-6">
+        <div className="max-w-5xl rounded-2xl border border-dashed bg-white p-12 text-center">
+          <p className="text-lg font-medium text-anthracite/80">
             Aucune organisation trouvée
           </p>
 
-          <p className="mt-2 text-slate-500">
+          <p className="mt-2 text-anthracite/60">
             Votre compte n’est pas encore rattaché à une agence.
           </p>
         </div>
@@ -37,17 +38,17 @@ export default async function SettingsPage() {
     );
   }
 
-  const n8nApiBaseUrl = "http://app:3000";
+  const n8nApiBaseUrl = process.env.APP_URL ?? "http://localhost:3000";
 
   return (
-    <main className="p-6">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <main className="px-4 py-6 sm:px-6">
+      <div className="max-w-2xl space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-lg font-semibold tracking-tight text-anthracite">
             Paramètres
           </h1>
 
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-anthracite/70">
             Configurez votre agence, vos boîtes mail et les intégrations.
           </p>
         </div>
@@ -79,3 +80,6 @@ export default async function SettingsPage() {
     </main>
   );
 }
+export const metadata: Metadata = {
+  title: "Paramètres de l’agence",
+};

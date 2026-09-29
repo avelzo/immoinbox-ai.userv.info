@@ -1,4 +1,9 @@
 export const EMAIL_CATEGORIES = {
+  URGENT: {
+    label: "Urgents",
+    badgeLabel: "Urgent",
+    color: "red",
+  },
   INCIDENT: {
     label: "Incidents",
     badgeLabel: "Incident",

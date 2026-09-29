@@ -1,99 +1,66 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-import type { Email, Intervention, InterventionStatus } from "@prisma/client";
+import { Calendar, User, ExternalLink, ChevronRight } from "lucide-react";
+import type { Email, Intervention } from "@prisma/client";
 import { InterventionStatusButton } from "@/components/InterventionStatusButton";
 import {
   getInterventionStatusLabel,
   getInterventionStatusClass,
 } from "@/lib/intervention-ui";
 
-type InterventionListRowProps = {
-  intervention: Intervention & {
-    incidentEmail: Email | null;
-  };
-  formattedCreatedAt: string;
-};
-
-function stopRowNavigation(event: React.MouseEvent) {
-  event.stopPropagation();
-}
-
 export function InterventionListRow({
   intervention,
   formattedCreatedAt,
-}: InterventionListRowProps) {
-  const router = useRouter();
-
+}: {
+  intervention: Intervention & { incidentEmail: Email | null };
+  formattedCreatedAt: string;
+}) {
   return (
-    <article
-      onClick={() =>
-        router.push(`/dashboard/interventions/${intervention.id}`)
-      }
-      className="group cursor-pointer rounded-xl border border-slate-200/80 bg-white px-4 py-4 shadow-sm transition hover:border-indigo-200 hover:shadow-md sm:px-5"
-    >
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <time className="text-xs text-slate-500">{formattedCreatedAt}</time>
-
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${getInterventionStatusClass(
-                intervention.status
-              )}`}
-            >
-              {getInterventionStatusLabel(intervention.status)}
-            </span>
-          </div>
-
-          <h3 className="mt-1.5 font-semibold leading-snug text-slate-900">
-            {intervention.title}
-          </h3>
-
-          {intervention.description && (
-            <p className="mt-1 line-clamp-2 text-sm text-slate-600">
+    <article className="overflow-hidden rounded-2xl border border-line bg-white transition-colors hover:border-sage-dark">
+      <div className="p-4">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <Link
+            href={`/dashboard/interventions/${intervention.id}`}
+            className="group min-w-0 flex-1"
+          >
+            <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold leading-snug text-anthracite group-hover:text-forest">
+              {intervention.title}
+              <ChevronRight size={13} className="shrink-0 text-anthracite/40" />
+            </h2>
+            <p className="text-sm leading-relaxed text-anthracite/70">
               {intervention.description}
             </p>
-          )}
-
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <p className="text-slate-600">
-              <span className="text-slate-400">Technicien · </span>
-              {intervention.technicianName ?? "Non assigné"}
-            </p>
-
-            {intervention.incidentEmail ? (
-              <p
-                className="min-w-0 text-slate-600"
-                onClick={stopRowNavigation}
-              >
-                <span className="text-slate-400">Incident · </span>
-                <Link
-                  href={`/dashboard/emails/${intervention.incidentEmail.id}`}
-                  className="font-medium text-indigo-700 hover:text-indigo-900"
-                >
-                  {intervention.incidentEmail.subject}
-                </Link>
-              </p>
-            ) : (
-              <p className="text-slate-400">Aucun incident lié</p>
-            )}
-          </div>
+          </Link>
+          <span
+            className={`rounded-md px-2 py-0.5 text-[10px] font-medium ${getInterventionStatusClass(intervention.status)}`}
+          >
+            {getInterventionStatusLabel(intervention.status)}
+          </span>
         </div>
-
-        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-indigo-400" />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-anthracite/60">
+          <span className="flex items-center gap-1">
+            <User size={11} />
+            {intervention.technicianName ?? "Technicien non assigné"}
+          </span>
+          <span className="flex items-center gap-1">
+            <Calendar size={11} />
+            Créée le {formattedCreatedAt}
+          </span>
+        </div>
       </div>
-
-      <div
-        className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3"
-        onClick={stopRowNavigation}
-      >
+      <div className="flex flex-wrap items-center gap-2 border-t border-line bg-ivory px-4 py-2.5">
         <InterventionStatusButton
           interventionId={intervention.id}
-          initialStatus={intervention.status as InterventionStatus}
+          initialStatus={intervention.status}
         />
+        {intervention.incidentEmail && (
+          <Link
+            href={`/dashboard/emails/${intervention.incidentEmail.id}`}
+            className="flex items-center gap-1.5 rounded-lg bg-sage px-2.5 py-1.5 text-xs font-medium text-forest hover:bg-sage-dark"
+          >
+            <ExternalLink size={11} />
+            Voir l’email source
+          </Link>
+        )}
       </div>
     </article>
   );
