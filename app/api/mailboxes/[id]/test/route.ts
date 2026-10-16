@@ -19,7 +19,6 @@ export async function POST(_request: Request, { params }: RouteProps) {
       { status: 401 }
     );
   }
-  let mailbox = null;
   try {
     const mailbox = await prisma.mailbox.findFirst({
       where: {
