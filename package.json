@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:prisma": "node --test scripts/test-prisma-security.mjs",
     "seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:realistic": "tsx prisma/seed-demo.ts"
@@ -22,6 +23,11 @@
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "zod": "^4.4.3"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    }
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
