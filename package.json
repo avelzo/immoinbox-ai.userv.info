@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:prisma": "node --test scripts/test-prisma-security.mjs",
+    "test:auth": "tsx scripts/test-auth-integration.ts",
     "seed": "tsx prisma/seed.ts",
     "seed:demo": "tsx prisma/seed-demo.ts",
     "seed:realistic": "tsx prisma/seed-demo.ts"

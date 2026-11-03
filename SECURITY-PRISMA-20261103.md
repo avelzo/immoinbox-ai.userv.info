@@ -22,10 +22,11 @@ Les traces serveur Next n'incluent pas deepmerge-ts ni @prisma/config, employés
 par la CLI. Installation du seul paquet corrigé sans scripts ; build actif et
 client Prisma inchangés, donc pas de redémarrage PM2 requis pour ce lot.
 
-Problème préexistant relevé pendant le build : Better Auth signale user.image
+Problème préexistant relevé pendant le build : Better Auth signalait user.image
 absent du schéma Prisma. Ce champ était déjà absent avant l'override et la
-version Better Auth n'a pas changé. Le build aboutit, mais ce diagnostic et la
-recette de connexion restent à traiter séparément ; ne pas prétendre que ce
-correctif de dépendance valide toute l'authentification de l'application.
+version Better Auth n'avait pas changé. Ce défaut a ensuite été corrigé dans
+un lot distinct le 03/11 : champ optionnel, client régénéré et recettes API/
+navigateur sur base isolée réussies. Voir AUTH-FIX-20261103.md. Le correctif
+de dépendance seul ne valait pas validation de l'authentification.
 
 Sources : https://github.com/RebeccaStevens/deepmerge-ts/releases/tag/v8.0.0
